@@ -1,8 +1,12 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <thread>
 #include <iomanip>
+
+#include <thread>
+#include <condition_variable>
+#include <mutex>
+#include <atomic>
 
 #include "SLIPInterface.h"
 #include "TCPDevice.h"
@@ -31,6 +35,10 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
+  std::condition_variable cv;
+  std::mutex mtx;
+  bool exit_flag = false;
+
   // Create a TCPDevice object on the specified port.
   TCPDevice device(argv[1], atoi(argv[2]));
   device.start_listener();
@@ -39,8 +47,18 @@ int main(int argc, char* argv[]) {
   SLIPInterface slip_interface(std::make_unique<TCPDevice>(device));
 
   // Start a thread to listen for incoming SLIP packets.
-  std::thread thread([&slip_interface]() {
+  std::thread thread([&slip_interface, &cv, &mtx, &exit_flag]() {
     while (true) {
+      // std::cout << "creating lock" << std::endl;
+      // std::unique_lock<std::mutex> lock(mtx);
+      // std::cout << "waiting on lock" << std::endl;
+      // cv.wait(lock, [&] { return exit_flag; });
+      // std::cout << "ended wait" << std::endl;
+
+      // if (exit_flag) {
+      //   break;
+      // }
+
       // Read a SLIP packet.
       std::vector<uint8_t> packet = slip_interface.read();
 
@@ -55,10 +73,15 @@ int main(int argc, char* argv[]) {
     }
   });
 
-  // Accept commands from the user.
+  std::cout << R"(
++-+ Mini SLIP v1.0.0 +-+
+
+send <port> <message>  # send message to port
+exit                   # quit application  
+)";
   while (true) {
     std::string command;
-    std::cout << "Input a command:" << std::endl;
+    std::cout << "> ";
     std::getline(std::cin, command);
 
     // If the command is "exit", terminate the application.
@@ -84,6 +107,15 @@ int main(int argc, char* argv[]) {
       slip_interface.write(packet);
     }
   }
+
+  // {
+  //   std::unique_lock<std::mutex> lock(mtx);
+  //   exit_flag = true;
+  //   cv.notify_one();
+  // }
+
+  // // Wait for the thread to exit.
+  // thread.join();
 
   return 0;
 }

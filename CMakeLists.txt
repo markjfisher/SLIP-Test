@@ -4,7 +4,7 @@ project(SLIPTerminal)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(include)
+#include_directories(include)
 
 add_library(BaseDevice INTERFACE)
 target_include_directories(BaseDevice INTERFACE include)
@@ -12,8 +12,8 @@ target_include_directories(BaseDevice INTERFACE include)
 add_library(DeviceImpls INTERFACE)
 target_include_directories(DeviceImpls INTERFACE include)
 
-add_library(SLIPInterface INTERFACE)
-target_include_directories(SLIPInterface INTERFACE include)
+add_library(SLIPInterface src/SLIPInterface.cpp)
+target_include_directories(SLIPInterface PUBLIC include)
 target_link_libraries(SLIPInterface INTERFACE BaseDevice)
 
 add_executable(SLIPTerminal src/main.cpp)
