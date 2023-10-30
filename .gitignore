@@ -1,3 +1,15 @@
-build
+build/*
+!build/.keep
+
 .vscode
+
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles
+
+# this is generated
+Makefile
+
+# this is the output file
+SLIPTerminal
 
