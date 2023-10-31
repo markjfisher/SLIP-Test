@@ -17,22 +17,22 @@ class SLIPInterface {
 public:
   SLIPInterface(std::unique_ptr<BaseDevice> device);
 
-  // Encodes a vector of bytes into a SLIP frame.
-  // Returns a vector of bytes containing the SLIP frame.
-  static std::vector<uint8_t> encode(const std::vector<uint8_t>& data);
-
-  // Decodes a SLIP frame into a vector of bytes.
-  // Returns a vector of bytes containing the decoded data.
-  static std::vector<uint8_t> decode(const std::vector<uint8_t>& data);
-
   // Reads a SLIP packet from the interface.
   std::vector<uint8_t> read();
 
   // Writes a SLIP packet to the interface.
   void write(const std::vector<uint8_t>& data);
 
+  // Checks if the interface has any data.
+  bool has_data();
+
 private:
   std::unique_ptr<BaseDevice> device_;
+  std::vector<uint8_t> receive_buffer_;
+
+  static std::vector<uint8_t> encode(const std::vector<uint8_t>& data);
+  static std::vector<uint8_t> decode(const std::vector<uint8_t>& data);
+
 };
 
 #endif

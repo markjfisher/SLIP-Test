@@ -4,8 +4,6 @@
 #include <iomanip>
 
 #include <thread>
-#include <condition_variable>
-#include <mutex>
 #include <atomic>
 
 #include "SLIPInterface.h"
@@ -28,16 +26,12 @@ void hex_dump(std::vector<uint8_t> packet) {
   }
 }
 
-
 int main(int argc, char* argv[]) {
   if (argc != 3) {
     std::cerr << "Usage: " << argv[0] << " <address> <port>" << std::endl;
     return 1;
   }
-
-  std::condition_variable cv;
-  std::mutex mtx;
-  bool exit_flag = false;
+  std::atomic_bool exit_flag = false;
 
   // Create a TCPDevice object on the specified port.
   TCPDevice device(argv[1], atoi(argv[2]));
@@ -47,37 +41,23 @@ int main(int argc, char* argv[]) {
   SLIPInterface slip_interface(std::make_unique<TCPDevice>(device));
 
   // Start a thread to listen for incoming SLIP packets.
-  std::thread thread([&slip_interface, &cv, &mtx, &exit_flag]() {
-    while (true) {
-      // std::cout << "creating lock" << std::endl;
-      // std::unique_lock<std::mutex> lock(mtx);
-      // std::cout << "waiting on lock" << std::endl;
-      // cv.wait(lock, [&] { return exit_flag; });
-      // std::cout << "ended wait" << std::endl;
-
-      // if (exit_flag) {
-      //   break;
-      // }
-
+  std::thread thread([&slip_interface, &exit_flag]() {
+    while (!exit_flag.load()) {
       // Read a SLIP packet.
       std::vector<uint8_t> packet = slip_interface.read();
-
       if (!packet.empty()) {
-        // Decode the SLIP packet.
-        packet = slip_interface.decode(packet);
         std::string data(packet.begin(), packet.end());
-
-        // Print the decoded data to the console.
-        std::cout << data << std::endl;
+        std::cout << "<<: [" << data << "]" << std::endl;
       }
     }
+    std::cout << "Reading thread exiting" << std::endl;
   });
 
   std::cout << R"(
 +-+ Mini SLIP v1.0.0 +-+
 
 send <port> <message>  # send message to port
-exit                   # quit application  
+exit                   # exit application
 )";
   while (true) {
     std::string command;
@@ -94,28 +74,33 @@ exit                   # quit application
       // Parse the port number and message from the command.
       std::string port_string = command.substr(5, command.find(" ") - 5);
       int port = std::stoi(port_string);
-      std::string message = command.substr(command.find(" ") + 1);
 
+      // Find the first space character after the port number.
+      size_t message_start = command.find(" ", command.find(" ") + 1);
+      std::string message;
+      if (message_start != std::string::npos) {
+        // Extract the message from the command.
+        message = command.substr(message_start + 1);
+      } else {
+        // No message specified.
+        message = "Wassup?";
+      }
+      std::cout << "sending: " << message << std::endl;
       // Create a TCPDevice object on the specified port.
       TCPDevice target(argv[1], port);
 
       // Create a SLIPInterface object using the TCPDevice object.
-      SLIPInterface slip_interface(std::make_unique<TCPDevice>(target));
+      SLIPInterface targetSlip(std::make_unique<TCPDevice>(target));
 
       // Write the SLIP packet to the device.
       std::vector<uint8_t> packet(message.begin(), message.end());
-      slip_interface.write(packet);
+      targetSlip.write(packet);
+      // target.close();
     }
   }
 
-  // {
-  //   std::unique_lock<std::mutex> lock(mtx);
-  //   exit_flag = true;
-  //   cv.notify_one();
-  // }
-
-  // // Wait for the thread to exit.
-  // thread.join();
+  exit_flag.store(true);
+  thread.join();
 
   return 0;
 }

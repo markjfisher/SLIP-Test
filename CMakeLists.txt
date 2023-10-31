@@ -4,6 +4,7 @@ project(SLIPTerminal)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# global adding include dir, shouldn't be needed, but keeping it for ref
 #include_directories(include)
 
 add_library(BaseDevice INTERFACE)
