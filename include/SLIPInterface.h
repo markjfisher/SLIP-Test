@@ -22,16 +22,13 @@ public:
 
   // Writes a SLIP packet to the interface.
   void write(const std::vector<uint8_t>& data);
-
-  // Checks if the interface has any data.
-  bool has_data();
+  static std::vector<uint8_t> decode(const std::vector<uint8_t>& data);
 
 private:
   std::unique_ptr<BaseDevice> device_;
   std::vector<uint8_t> receive_buffer_;
 
   static std::vector<uint8_t> encode(const std::vector<uint8_t>& data);
-  static std::vector<uint8_t> decode(const std::vector<uint8_t>& data);
 
 };
 

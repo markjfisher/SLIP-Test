@@ -22,10 +22,6 @@ class TCPDevice : public BaseDevice
 public:
   TCPDevice(const std::string &ip_address, int port) : ip_address_(ip_address), port_(port) {}
 
-  void close() {
-    ::close(writer_handle_);
-  }
-
   void start_listener() {
 #ifdef _WIN32
     WSADATA wsa_data;
@@ -105,7 +101,7 @@ public:
       std::cerr << "Error writing data to TCP socket: " << std::strerror(errno) << std::endl;
       exit(1);
     }
-    ::close(writer_handle_);
+    close(writer_handle_);
   }
 
   virtual std::vector<uint8_t> Read() override
@@ -118,11 +114,13 @@ public:
 
     // Read data from the TCP socket.
     std::vector<uint8_t> buffer(1024);
+    std::cout << "starting read" << std::endl;
 #ifdef _WIN32
     int bytes_received = recv(client_socket_handle_, reinterpret_cast<char *>(buffer.data()), buffer.size(), 0);
 #else
     int bytes_received = read(client_socket_handle_, buffer.data(), buffer.size());
 #endif
+    std::cout << "completed read" << std::endl;
     if (bytes_received < 0)
     {
       std::cerr << "Error reading data from TCP socket: " << std::strerror(errno) << std::endl;
@@ -132,7 +130,7 @@ public:
     // Resize the buffer to the number of bytes received.
     buffer.resize(bytes_received);
 
-    ::close(client_socket_handle_);
+    close(client_socket_handle_);
 
     // Return the received data.
     return buffer;

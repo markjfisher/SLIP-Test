@@ -60,28 +60,10 @@ std::vector<uint8_t> SLIPInterface::decode(const std::vector<uint8_t>& data) {
 }
 
 std::vector<uint8_t> SLIPInterface::read() {
-  if (receive_buffer_.empty()) {
-    // Read data from the physical interface.
-    std::vector<uint8_t> data;
-    data = device_->Read();
-
-    // Append the data to the receive buffer.
-    receive_buffer_.insert(receive_buffer_.end(), data.begin(), data.end());
-  }
-
-  std::vector<uint8_t> packet = decode(receive_buffer_);
-
-  // Remove the decoded packet from the receive buffer.
-  receive_buffer_.erase(receive_buffer_.begin(), receive_buffer_.begin() + packet.size());
-
-  // Return the decoded packet.
-  return packet;
+  return device_->Read();
+  // return decode(device_->Read());
 }
 
 void SLIPInterface::write(const std::vector<uint8_t>& data) {
   device_->Write(encode(data));
-}
-
-bool SLIPInterface::has_data() {
-  return !receive_buffer_.empty();
 }

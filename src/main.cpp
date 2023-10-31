@@ -44,11 +44,14 @@ int main(int argc, char* argv[]) {
   std::thread thread([&slip_interface, &exit_flag]() {
     while (!exit_flag.load()) {
       // Read a SLIP packet.
+      std::cout << "thread: doing read" << std::endl;
       std::vector<uint8_t> packet = slip_interface.read();
       if (!packet.empty()) {
+        packet = slip_interface.decode(packet);
         std::string data(packet.begin(), packet.end());
         std::cout << "<<: [" << data << "]" << std::endl;
       }
+      std::cout << "thread: looping while" << std::endl;
     }
     std::cout << "Reading thread exiting" << std::endl;
   });
@@ -59,11 +62,9 @@ int main(int argc, char* argv[]) {
 send <port> <message>  # send message to port
 exit                   # exit application
 )";
-  while (true) {
-    std::string command;
-    std::cout << "> ";
-    std::getline(std::cin, command);
-
+  std::string command;
+  std::cout << "> ";
+  while (std::getline(std::cin, command)) {
     // If the command is "exit", terminate the application.
     if (command == "exit") {
       std::cout << "exiting!" << std::endl;
@@ -95,10 +96,12 @@ exit                   # exit application
       // Write the SLIP packet to the device.
       std::vector<uint8_t> packet(message.begin(), message.end());
       targetSlip.write(packet);
-      // target.close();
     }
-  }
 
+    std::cout << "> ";
+
+  }
+  std::cout << "killing read thread" << std::endl;
   exit_flag.store(true);
   thread.join();
 
