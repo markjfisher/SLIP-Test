@@ -39,6 +39,7 @@ std::vector<uint8_t> SLIPInterface::decode(const std::vector<uint8_t>& data) {
   }
 
   // Decode the data bytes.
+  std::cout << "data.size: " << data.size() << std::endl;
   for (int i = 1; i < data.size() - 1; i++) {
     if (data[i] == SLIP_ESCAPE_BYTE) {
       // Escape byte.
@@ -60,8 +61,12 @@ std::vector<uint8_t> SLIPInterface::decode(const std::vector<uint8_t>& data) {
 }
 
 std::vector<uint8_t> SLIPInterface::read() {
-  return device_->Read();
-  // return decode(device_->Read());
+  // return device_->Read();
+  auto data = device_->Read();
+  if (!data.empty()) {
+    return decode(data);
+  }
+  return data;
 }
 
 void SLIPInterface::write(const std::vector<uint8_t>& data) {

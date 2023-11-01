@@ -111,16 +111,15 @@ public:
       std::cerr << "Error accepting incoming connection: " << std::strerror(errno) << std::endl;
       exit(1);
     }
+    // fcntl(client_socket_handle_, F_SETFL, O_NONBLOCK);
 
     // Read data from the TCP socket.
     std::vector<uint8_t> buffer(1024);
-    std::cout << "starting read" << std::endl;
 #ifdef _WIN32
     int bytes_received = recv(client_socket_handle_, reinterpret_cast<char *>(buffer.data()), buffer.size(), 0);
 #else
     int bytes_received = read(client_socket_handle_, buffer.data(), buffer.size());
 #endif
-    std::cout << "completed read" << std::endl;
     if (bytes_received < 0)
     {
       std::cerr << "Error reading data from TCP socket: " << std::strerror(errno) << std::endl;

@@ -44,14 +44,14 @@ int main(int argc, char* argv[]) {
   std::thread thread([&slip_interface, &exit_flag]() {
     while (!exit_flag.load()) {
       // Read a SLIP packet.
-      std::cout << "thread: doing read" << std::endl;
+      // std::cout << "thread: doing read" << std::endl;
       std::vector<uint8_t> packet = slip_interface.read();
       if (!packet.empty()) {
-        packet = slip_interface.decode(packet);
+        // packet = slip_interface.decode(packet);
         std::string data(packet.begin(), packet.end());
         std::cout << "<<: [" << data << "]" << std::endl;
       }
-      std::cout << "thread: looping while" << std::endl;
+      // std::cout << "thread: looping while" << std::endl;
     }
     std::cout << "Reading thread exiting" << std::endl;
   });
