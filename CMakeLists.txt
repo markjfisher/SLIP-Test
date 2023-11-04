@@ -7,15 +7,16 @@ set(CMAKE_CXX_STANDARD 17)
 # global adding include dir, shouldn't be needed, but keeping it for ref
 #include_directories(include)
 
-add_library(BaseDevice INTERFACE)
-target_include_directories(BaseDevice INTERFACE include)
+add_library(SLIP src/SLIP.cpp)
+target_include_directories(SLIP PUBLIC include)
 
-add_library(DeviceImpls INTERFACE)
-target_include_directories(DeviceImpls INTERFACE include)
+add_library(Listener src/Listener.cpp)
+target_include_directories(Listener PUBLIC include)
+# target_link_libraries(Listener SLIP)
 
-add_library(SLIPInterface src/SLIPInterface.cpp)
-target_include_directories(SLIPInterface PUBLIC include)
-target_link_libraries(SLIPInterface INTERFACE BaseDevice)
+add_library(Requestor src/Requestor.cpp)
+target_include_directories(Requestor PUBLIC include)
+target_link_libraries(Requestor Listener)
 
 add_executable(SLIPTerminal src/main.cpp)
 target_link_libraries(SLIPTerminal SLIPInterface DeviceImpls BaseDevice)
