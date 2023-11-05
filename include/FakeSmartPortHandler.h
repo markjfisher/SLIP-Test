@@ -1,11 +1,16 @@
 #pragma once
 
 #include <memory>
+#include <iostream>
 #include "SmartPortHandler.h"
 
 class FakeSmartPortHandler : public SmartPortHandler {
 
 public:
+  FakeSmartPortHandler() {
+    std::cout << "Creating FakeSmartPortHandler" << std::endl;
+  }
+
   virtual std::unique_ptr<Response> status(StatusRequest* request) override;
   // virtual Response* read_block(ReadBlockRequest* request) override;
   // virtual Response* write_block(WriteBlockRequest* request) override;

@@ -3,6 +3,7 @@
 #include <iostream>
 
 Listener::~Listener() {
+  std::cout << "In listener destructor" << std::endl;
   stop();
 }
 
@@ -11,75 +12,85 @@ std::thread Listener::createListenerThread() {
 }
 
 void Listener::listenerFunction() {
-    std::thread listener_thread([this]() {
-    int server_fd, new_socket;
-    struct sockaddr_in address;
-    int addrlen = sizeof(address);
+  int server_fd, new_socket;
+  struct sockaddr_in address;
+  int addrlen = sizeof(address);
+  std::cout << "In listenerFunction, creating socket" << std::endl;
 #ifdef _WIN32
-    WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
-      std::cerr << "socket creation failed" << std::endl;
+  WSADATA wsaData;
+  WSAStartup(MAKEWORD(2, 2), &wsaData);
+  if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+    std::cerr << "socket creation failed" << std::endl;
+  }
+#else
+  if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    perror("socket failed");
+    exit(EXIT_FAILURE);
+  }
+#endif
+
+  address.sin_family = AF_INET;
+  address.sin_addr.s_addr = INADDR_ANY;
+  address.sin_port = htons(port_);
+  address.sin_addr.s_addr = inet_addr(ip_address_.c_str());
+
+  std::cout << "... binding" << std::endl;
+#ifdef _WIN32
+  if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == SOCKET_ERROR) {
+    std::cerr << "bind failed" << std::endl;
+  }
+#else
+  if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+    perror("bind failed");
+    exit(EXIT_FAILURE);
+  }
+#endif
+
+  std::cout << "... listening" << std::endl;
+  if (listen(server_fd, 3) < 0) {
+    perror("listen");
+    exit(EXIT_FAILURE);
+  }
+
+  while (is_listening_) {
+    std::cout << "... accepting connection" << std::endl;
+
+#ifdef _WIN32
+    if ((new_socket = accept(server_fd, (SOCKADDR*)&address, &addrlen)) == INVALID_SOCKET) {
+      perror("accept");
+      exit(EXIT_FAILURE);
     }
 #else
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-      perror("socket failed");
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
+      perror("accept");
       exit(EXIT_FAILURE);
     }
 #endif
 
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port_);
-    address.sin_addr.s_addr = inet_addr(ip_address_.c_str());
+    std::cout << "creating thread to handle connection" << std::endl;
+    std::thread([this, new_socket]() {
+      std::cout << "handling connection" << std::endl;
+      handleConnection(new_socket);
+#ifdef _WIN32
+      closesocket(new_socket);
+#else
+      close(new_socket);
+#endif
+      std::cout << "socket closed, should be terminating the thread" << std::endl;
+    }).detach();
+
+    std::cout << "handler thread was created and detach() called" << std::endl;
+
+  }
+
+  std::cout << "outside while loop" << std::endl;
 
 #ifdef _WIN32
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == SOCKET_ERROR) {
-      std::cerr << "bind failed" << std::endl;
-    }
+  closesocket(server_fd);
+  WSACleanup();
 #else
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-      perror("bind failed");
-      exit(EXIT_FAILURE);
-    }
+  close(server_fd);
 #endif
-
-    if (listen(server_fd, 3) < 0) {
-      perror("listen");
-      exit(EXIT_FAILURE);
-    }
-
-    while (is_listening_) {
-#ifdef _WIN32
-      if ((new_socket = accept(server_fd, (SOCKADDR*)&address, &addrlen)) == INVALID_SOCKET) {
-        perror("accept");
-        exit(EXIT_FAILURE);
-      }
-#else
-      if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-        perror("accept");
-        exit(EXIT_FAILURE);
-      }
-#endif
-
-      std::thread([this, new_socket]() {
-        handleConnection(new_socket);
-#ifdef _WIN32
-        closesocket(new_socket);
-#else
-        close(new_socket);
-#endif
-      }).detach();
-
-    }
-
-#ifdef _WIN32
-    closesocket(server_fd);
-    WSACleanup();
-#else
-    close(server_fd);
-#endif
-  });
 
 }
 
@@ -123,7 +134,7 @@ void Listener::handleConnection(int socket) {
 
 void Listener::start() {
   is_listening_ = true;
-  createListenerThread().detach();
+  std::thread(&Listener::listenerFunction, this).detach();
 }
 
 void Listener::stop() {

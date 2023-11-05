@@ -6,6 +6,9 @@
 #include "Response.h"
 #include "SPoSLIP.h"
 
+// Forward reference to break circular dependency
+class Response;
+
 class Request : public Packet {
 public:
   virtual std::vector<uint8_t> serialize() const override = 0;

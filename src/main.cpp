@@ -4,7 +4,6 @@
 #include <iomanip>
 
 #include <thread>
-#include <atomic>
 
 #include "TCPConnection.h"
 #include "Listener.h"
@@ -14,7 +13,9 @@
 #include "FakeSmartPortHandler.h"
 
 int main(int argc, char* argv[]) {
-  std::atomic_bool exit_flag = false;
+  std::unique_ptr<FakeSmartPortHandler> handler;
+  std::unique_ptr<Responder> responder;
+  std::unique_ptr<Listener> listener;
 
   std::cout << R"(
 +-+ SP over SLIP tester v1.0.0 +-+
@@ -32,18 +33,18 @@ exit              # exit application
     }
 
     if (command.find("start") == 0) {
-      std::unique_ptr<FakeSmartPortHandler> handler = std::make_unique<FakeSmartPortHandler>();
-      std::unique_ptr<Responder> responder = std::make_unique<Responder>(std::move(handler));
+      handler = std::make_unique<FakeSmartPortHandler>();
+      responder = std::make_unique<Responder>(std::move(handler));
 
       std::string port_string = command.substr(7, command.find(" ") - 7);
       int port = std::stoi(port_string);
-      Listener listener("127.0.0.1", port, std::move(responder));
-      listener.start();
+      listener = std::make_unique<Listener>("127.0.0.1", port, std::move(responder));
+      listener->start();
       std::cout << "Created listener" << std::endl;
     }
 
     if (command.find("status") == 0) {
-      std::string port_string = command.substr(7, command.find(" ") - 7);
+      std::string port_string = command.substr(8, command.find(" ") - 8);
       int port = std::stoi(port_string);
 
       std::unique_ptr<TCPConnection> connection = std::make_unique<TCPConnection>("127.0.0.1", port);
@@ -59,11 +60,10 @@ exit              # exit application
       }
     }
 
+    std::cout << "listening still? " << listener->getIsListening() << std::endl;
     std::cout << "> ";
 
   }
-  std::cout << "killing read thread" << std::endl;
-  exit_flag.store(true);
-
+  std::cout << "Tumbling out of main" << std::endl;
   return 0;
 }

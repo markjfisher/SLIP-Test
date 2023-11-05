@@ -10,24 +10,30 @@
   #include <unistd.h>
 #endif
 #include <iostream>
+#include <string>
 #include "SLIP.h"
+#include "Util.h"
 
 TCPConnection::TCPConnection(const std::string& ip_address, int port)
   : ip_address_(ip_address), port_(port) {}
 
 
 std::vector<uint8_t> TCPConnection::sendData(const std::vector<uint8_t>& data) {
+  std::cout << "TCPConnection::sendData" << std::endl;
+  Util::hex_dump(data);
+
   if (data.empty()) {
     std::cerr << "TCPConnection::sendData No data was given to send" << std::endl;
     return std::vector<uint8_t>();
   }
 
   auto slip_data = SLIP::encode(data);
+  Util::hex_dump(slip_data);
 #ifdef _WIN32
   WSADATA wsaData;
   if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
     std::cerr << "Failed to initialize winsock" << std::endl;
-    return;
+    return std::vector<uint8_t>();
   }
   SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 #else
@@ -37,6 +43,8 @@ std::vector<uint8_t> TCPConnection::sendData(const std::vector<uint8_t>& data) {
   struct sockaddr_in server_address;
   server_address.sin_family = AF_INET;
   server_address.sin_port = htons(port_);
+  std::cout << "server_address: " << ip_address_.c_str() << ", port: " << port_ << std::endl;
+
   if (inet_pton(AF_INET, ip_address_.c_str(), &(server_address.sin_addr)) <= 0) {
     std::cerr << "Invalid address/ Address not supported" << std::endl;
     return std::vector<uint8_t>();

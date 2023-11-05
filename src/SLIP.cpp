@@ -1,8 +1,13 @@
+#include <iostream>
 #include <stddef.h>
 #include "SLIP.h"
+#include "Util.h"
 
 std::vector<uint8_t> SLIP::encode(const std::vector<uint8_t>& data) {
   std::vector<uint8_t> encoded_data;
+
+  // start with SLIP_END
+  encoded_data.push_back(SLIP_END);
 
   // Escape any SLIP special characters in the packet data
   for (uint8_t byte : data) {
@@ -21,6 +26,10 @@ std::vector<uint8_t> SLIP::encode(const std::vector<uint8_t>& data) {
 }
 
 std::vector<uint8_t> SLIP::decode(const std::vector<uint8_t>& data) {
+  std::cout << "SLIP::decode" << std::endl;
+  Util::hex_dump(data);
+
+
   std::vector<uint8_t> decoded_data;
   auto bytes_read = data.size();
 
@@ -66,6 +75,9 @@ std::vector<uint8_t> SLIP::decode(const std::vector<uint8_t>& data) {
 
     i++;
   }
+
+  std::cout << "SLIP::decode, sending decoded data:" << std::endl;
+  Util::hex_dump(decoded_data);
 
   return decoded_data;
 }

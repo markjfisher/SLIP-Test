@@ -12,6 +12,7 @@ std::vector<uint8_t> Responder::process(const std::vector<uint8_t>& packet) {
   std::unique_ptr<Request> request;
 
   uint8_t command = packet[1];
+  std::cout << "Responder::process for command: " << command << std::endl;
   switch(command) {
 
   case SP_STATUS:

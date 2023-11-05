@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 #include <thread>
+#include <string>
+#include <iostream>
 
 #ifdef _WIN32
     #include <winsock2.h>
@@ -16,7 +18,9 @@
 class Listener {
 public:
   Listener(const std::string &ip_address, int port, std::unique_ptr<Responder> responder) 
-    : ip_address_(ip_address), port_(port), is_listening_(false), responder_(std::move(responder)) {}
+    : ip_address_(ip_address), port_(port), is_listening_(false), responder_(std::move(responder)) {
+      std::cout << "Creating Listener" << std::endl;
+    }
 
   ~Listener();
 
@@ -24,6 +28,7 @@ public:
   void stop();
 
   std::thread createListenerThread();
+  bool getIsListening() { return is_listening_; }
 
 private:
   int port_;
