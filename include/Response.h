@@ -6,7 +6,7 @@
 #include "Request.h"
 #include "SPoSLIP.h"
 
-class Response : public Packet, public SPoSLIP {
+class Response : public Packet {
 public:
   virtual std::vector<uint8_t> serialize() const override = 0;
   virtual Request* deserialize(const std::vector<uint8_t>& data) = 0;

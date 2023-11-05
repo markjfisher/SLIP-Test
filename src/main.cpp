@@ -6,44 +6,33 @@
 #include <thread>
 #include <atomic>
 
+#include "Connection.h"
+#include "Listener.h"
+#include "Requestor.h"
+
 int main(int argc, char* argv[]) {
-  if (argc != 3) {
-    std::cerr << "Usage: " << argv[0] << " <address> <port>" << std::endl;
-    return 1;
-  }
   std::atomic_bool exit_flag = false;
 
   std::cout << R"(
-+-+ Mini SLIP v1.0.0 +-+
++-+ SP over SLIP tester v1.0.0 +-+
 
-send <port> <message>  # send message to port
-exit                   # exit application
+start <port>      # create listener on port given
+status <port>     # send status request to port
+
+exit              # exit application
 )";
   std::string command;
   std::cout << "> ";
   while (std::getline(std::cin, command)) {
-    // If the command is "exit", terminate the application.
     if (command == "exit") {
-      std::cout << "exiting!" << std::endl;
       break;
     }
 
-    if (command.find("send") == 0) {
+    if (command.find("status") == 0) {
       // Parse the port number and message from the command.
-      std::string port_string = command.substr(5, command.find(" ") - 5);
+      std::string port_string = command.substr(7, command.find(" ") - 7);
       int port = std::stoi(port_string);
 
-      // Find the first space character after the port number.
-      size_t message_start = command.find(" ", command.find(" ") + 1);
-      std::string message;
-      if (message_start != std::string::npos) {
-        // Extract the message from the command.
-        message = command.substr(message_start + 1);
-      } else {
-        // No message specified.
-        message = "Wassup?";
-      }
-      std::cout << "sending: " << message << std::endl;
     }
 
     std::cout << "> ";

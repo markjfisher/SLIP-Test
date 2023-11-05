@@ -119,11 +119,15 @@ void Listener::stop() {
   is_listening_ = false;
 }
 
-std::pair<std::chrono::system_clock::time_point, std::vector<uint8_t>> Listener::getPacket(uint8_t index) {
-  if (response_map_.find(index) != response_map_.end()) {
-    return response_map_[index];
+bool Listener::hasResponse(uint8_t sequence_number) const {
+  return response_map_.find(sequence_number) != response_map_.end();
+}
+
+std::vector<uint8_t> Listener::getPacket(uint8_t index) {
+  if (hasResponse(index)) {
+    return response_map_[index].second;
   } else {
-    return { std::chrono::system_clock::time_point(), std::vector<uint8_t>() };  // return empty pair
+    return std::vector<uint8_t>();
   }
 }
 

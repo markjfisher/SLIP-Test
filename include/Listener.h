@@ -22,8 +22,9 @@ public:
   void start();
   void stop();
 
-  std::pair<std::chrono::system_clock::time_point, std::vector<uint8_t>> getPacket(uint8_t index);
+  std::vector<uint8_t> Listener::getPacket(uint8_t index);
   void addPacket(uint8_t index, const std::vector<uint8_t>& packet);
+  bool hasResponse(uint8_t sequence_number) const;
 
   std::thread createListenerThread();
   void startPruning();
