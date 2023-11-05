@@ -71,8 +71,9 @@ std::vector<uint8_t> SLIP::decode(const std::vector<uint8_t>& data) {
 }
 
 
-std::vector<std::vector<uint8_t>> SLIP::splitIntoSlipPackets(const uint8_t* data, size_t bytes_read) {
-  std::vector<std::vector<uint8_t>> slip_packets;
+std::vector<std::vector<uint8_t>> SLIP::splitIntoPackets(const uint8_t* data, size_t bytes_read) {
+  // The list of decoded SLIP packets
+  std::vector<std::vector<uint8_t>> packets;
 
   enum class State {
     NotParsing,
@@ -96,7 +97,7 @@ std::vector<std::vector<uint8_t>> SLIP::splitIntoSlipPackets(const uint8_t* data
           std::vector<uint8_t> slip_packet_data(data + i - 1, data + i);
 
           // Add the SLIP packet data to the list of SLIP packets
-          slip_packets.push_back(slip_packet_data);
+          packets.push_back(SLIP::decode(slip_packet_data));
 
           // Transition back to the NotParsing state
           state = State::NotParsing;
@@ -106,5 +107,5 @@ std::vector<std::vector<uint8_t>> SLIP::splitIntoSlipPackets(const uint8_t* data
     i++;
   }
 
-  return slip_packets;
+  return packets;
 }

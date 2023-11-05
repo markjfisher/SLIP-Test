@@ -5,6 +5,5 @@
 
 class Packet {
 public:
-  virtual void serialize(std::vector<uint8_t>& data) const = 0;
-  virtual void deserialize(const std::vector<uint8_t>& data) = 0;
+  virtual std::vector<uint8_t> serialize() const = 0;
 };
