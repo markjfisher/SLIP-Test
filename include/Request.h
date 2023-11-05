@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 #include <stdint.h>
 #include "Response.h"
 #include "SPoSLIP.h"
@@ -8,7 +9,7 @@
 class Request : public Packet {
 public:
   virtual std::vector<uint8_t> serialize() const override = 0;
-  virtual Response* deserialize(const std::vector<uint8_t>& data) = 0;
+  virtual std::unique_ptr<Response> deserialize(const std::vector<uint8_t>& data) = 0;
 
   uint8_t get_command_number() const { return command_number_; }
   void set_command_number(uint8_t command_number) { command_number_ = command_number; }

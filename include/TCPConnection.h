@@ -6,7 +6,7 @@
 class TCPConnection : public Connection {
 public:
   TCPConnection(const std::string& ip_address, int port);
-  virtual void sendData(const std::vector<uint8_t>& data) override;
+  virtual std::vector<uint8_t> sendData(const std::vector<uint8_t>& data) override;
 
 private:
   std::string ip_address_;

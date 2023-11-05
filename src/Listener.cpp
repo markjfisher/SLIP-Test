@@ -3,9 +3,6 @@
 #include <iostream>
 
 Listener::~Listener() {
-  if (is_pruning_) {
-    stopPruning();
-  }
   stop();
 }
 
@@ -65,38 +62,15 @@ void Listener::listenerFunction() {
       }
 #endif
 
-      std::vector<uint8_t> completeData;
-      std::vector<uint8_t> buffer(1024);
-
-      int valread = 0;
-      do {
+      std::thread([this, new_socket]() {
+        handleConnection(new_socket);
 #ifdef _WIN32
-        valread = recv(new_socket, reinterpret_cast<char*>(buffer.data()), buffer.size(), 0);
+        closesocket(new_socket);
 #else
-        valread = read(new_socket, buffer.data(), buffer.size());
+        close(new_socket);
 #endif
-        if (valread > 0) {
-          completeData.insert(completeData.end(), buffer.begin(), buffer.begin() + valread);
-        }
-      } while (valread > 0);
+      }).detach();
 
-      if (!completeData.empty()) {
-        std::vector<std::vector<uint8_t>> packets = SLIP::splitIntoPackets(completeData.data(), completeData.size());
-        for (const auto& packet : packets) {
-          if (!packet.empty()) {
-            response_map_[packet[0]] = std::make_pair(std::chrono::system_clock::now(), packet);
-          }
-        }
-      }
-      else {
-          // handle error
-      }
-
-#ifdef _WIN32
-      closesocket(new_socket);
-#else
-      close(new_socket);
-#endif
     }
 
 #ifdef _WIN32
@@ -109,58 +83,49 @@ void Listener::listenerFunction() {
 
 }
 
+// This accepts Request operations, and returns Response data on the same socket.
+void Listener::handleConnection(int socket) {
+  std::vector<uint8_t> completeData;
+  std::vector<uint8_t> buffer(1024);
+
+  int valread = 0;
+  do {
+#ifdef _WIN32
+    valread = recv(socket, reinterpret_cast<char*>(buffer.data()), buffer.size(), 0);
+#else
+    valread = read(socket, buffer.data(), buffer.size());
+#endif
+    if (valread > 0) {
+      completeData.insert(completeData.end(), buffer.begin(), buffer.begin() + valread);
+    }
+  } while (valread > 0);
+
+  // for every slip packet we received (probably only 1 as this is a 1:1 request to response) process it and send back the response.
+  if (!completeData.empty()) {
+    std::vector<std::vector<uint8_t>> packets = SLIP::splitIntoPackets(completeData.data(), completeData.size());
+    for (const auto& packet : packets) {
+      if (!packet.empty()) {
+        std::vector<uint8_t> response = SLIP::encode(responder_->process(packet));
+
+#ifdef _WIN32
+        send(socket, reinterpret_cast<const char *>(response.data()), response.size(), 0);
+#else
+        write(socket, response.data(), response.size());
+#endif
+
+      }
+    }
+  }
+  else {
+    // handle error
+  }
+}
+
 void Listener::start() {
   is_listening_ = true;
   createListenerThread().detach();
-  startPruning();
 }
 
 void Listener::stop() {
   is_listening_ = false;
-}
-
-bool Listener::hasResponse(uint8_t sequence_number) const {
-  return response_map_.find(sequence_number) != response_map_.end();
-}
-
-std::vector<uint8_t> Listener::getPacket(uint8_t index) {
-  if (hasResponse(index)) {
-    return response_map_[index].second;
-  } else {
-    return std::vector<uint8_t>();
-  }
-}
-
-void Listener::addPacket(uint8_t index, const std::vector<uint8_t>& packet) {
-  response_map_[index] = std::make_pair(std::chrono::system_clock::now(), packet);
-}
-
-void Listener::prune(std::chrono::system_clock::duration max_age) {
-  auto now = std::chrono::system_clock::now();
-
-  for (auto it = response_map_.begin(); it != response_map_.end(); ) {
-    auto age = now - it->second.first;
-    if (age > max_age) {
-      it = response_map_.erase(it);
-    } else {
-      ++it;
-    }
-  }
-}
-
-void Listener::startPruning() {
-  is_pruning_ = true;
-  pruning_thread_ = std::thread([this] {
-    while (is_pruning_) {
-      prune(std::chrono::minutes(30));
-      std::this_thread::sleep_for(std::chrono::minutes(1));
-    }
-  });
-}
-
-void Listener::stopPruning() {
-  is_pruning_ = false;
-  if (pruning_thread_.joinable()) {
-    pruning_thread_.join();
-  }
 }
