@@ -6,9 +6,12 @@
 #include <thread>
 #include <atomic>
 
-#include "Connection.h"
+#include "TCPConnection.h"
 #include "Listener.h"
 #include "Requestor.h"
+#include "StatusRequest.h"
+#include "StatusResponse.h"
+#include "FakeSmartPortHandler.h"
 
 int main(int argc, char* argv[]) {
   std::atomic_bool exit_flag = false;
@@ -28,11 +31,32 @@ exit              # exit application
       break;
     }
 
+    if (command.find("start") == 0) {
+      std::unique_ptr<FakeSmartPortHandler> handler = std::make_unique<FakeSmartPortHandler>();
+      std::unique_ptr<Responder> responder = std::make_unique<Responder>(std::move(handler));
+
+      std::string port_string = command.substr(7, command.find(" ") - 7);
+      int port = std::stoi(port_string);
+      Listener listener("127.0.0.1", port, std::move(responder));
+      listener.start();
+      std::cout << "Created listener" << std::endl;
+    }
+
     if (command.find("status") == 0) {
-      // Parse the port number and message from the command.
       std::string port_string = command.substr(7, command.find(" ") - 7);
       int port = std::stoi(port_string);
 
+      std::unique_ptr<TCPConnection> connection = std::make_unique<TCPConnection>("127.0.0.1", port);
+      Requestor requestor(std::move(connection));
+
+      StatusRequest statusRequest(10, 1, 0);
+      auto response = requestor.sendRequest(statusRequest);
+      StatusResponse* statusResponse = dynamic_cast<StatusResponse*>(response.get());
+      if (statusResponse != nullptr) {
+        std::cout << "Found valid status response:" << statusResponse->get_status() << std::endl;
+      } else {
+        std::cout << "error casting to StatusResponse" << std::endl;
+      }
     }
 
     std::cout << "> ";

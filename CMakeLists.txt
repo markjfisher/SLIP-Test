@@ -4,21 +4,19 @@ project(SLIPTerminal)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# global adding include dir, shouldn't be needed, but keeping it for ref
-#include_directories(include)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_library(SLIP src/SLIP.cpp)
-target_include_directories(SLIP PUBLIC include)
+set(SOURCE_FILES src/main.cpp
+    include/SmartPortHandler.h include/FakeSmartPortHandler.h src/FakeSmartPortHandler.cpp
+    include/Listener.h src/Listener.cpp
+    include/Requestor.h src/Requestor.cpp
+    include/Responder.h src/Responder.cpp
+    include/SLIP.h src/SLIP.cpp
+    include/StatusRequest.h src/StatusRequest.cpp
+    include/StatusResponse.h src/StatusResponse.cpp
+    include/TCPConnection.h src/TCPConnection.cpp
+)
 
-add_library(Listener src/Listener.cpp)
-target_include_directories(Listener PUBLIC include)
-# target_link_libraries(Listener SLIP)
-
-add_library(Requestor src/Requestor.cpp)
-target_include_directories(Requestor PUBLIC include)
-target_link_libraries(Requestor Listener)
-
-add_executable(SLIPTerminal src/main.cpp)
-target_link_libraries(SLIPTerminal SLIPInterface DeviceImpls BaseDevice)
+add_executable(SLIPTerminal ${SOURCE_FILES})
 
 target_compile_features(SLIPTerminal PRIVATE cxx_std_17)

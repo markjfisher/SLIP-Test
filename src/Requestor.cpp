@@ -1,9 +1,9 @@
 #include "Requestor.h"
 
-Requestor::Requestor(Connection* connection)
-  : connection_(connection) {}
+Requestor::Requestor(std::unique_ptr<Connection> connection)
+  : connection_(std::move(connection)) {}
 
-std::unique_ptr<Response> Requestor::sendRequest(Request& request) {
+std::unique_ptr<Response> Requestor::sendRequest(const Request& request) {
   // Send the serialized request
   auto response_data = connection_->sendData(request.serialize());
 

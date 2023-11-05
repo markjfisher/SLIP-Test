@@ -1,10 +1,9 @@
-#include "Responder.h"
 #include <stdexcept>
+#include <memory>
 #include <sstream>
 #include <memory>
 #include "SLIP.h"
-
-Responder::Responder(SmartPortHandler* handler) : smartPortHandler_(handler) {}
+#include "Responder.h"
 
 std::vector<uint8_t> Responder::process(const std::vector<uint8_t>& packet) {
   // Convert each packet's "command" into the appropriate Request object, let the smart port handler process it, then slip encode the response and return the data

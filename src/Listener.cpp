@@ -117,7 +117,7 @@ void Listener::handleConnection(int socket) {
     }
   }
   else {
-    // handle error
+    // handle no data?
   }
 }
 
