@@ -35,24 +35,26 @@ exit              # exit application
 
     // add 2 to string length for the next arg
     if (command.find("start") == 0) {
-      std::string port_string = command.substr(7, command.find(" ") - 7);
+      std::string port_string = command.substr(6);
       int port = std::stoi(port_string);
       listener = std::make_unique<Listener>("127.0.0.1", port);
       listener->start();
-      std::cout << "Created listener" << std::endl;
+      std::cout << "Created listener on port " << port_string << std::endl;
     }
 
     if (command.find("connect") == 0) {
-      std::string port_string = command.substr(9, command.find(" ") - 9);
+      std::string port_string = command.substr(8);
       int port = std::stoi(port_string);
+      std::cout << "Connecting to port " << port_string << std::endl;
 
       // connect to the listener, and send the capabilities of the fake SP device
-      
+
 
     }
 
     if (command.find("status") == 0) {
-      std::string unit_string = command.substr(8, command.find(" ") - 8);
+      std::string unit_string = command.substr(7);
+      std::cout << "unit_string: >" << unit_string << "<" << std::endl;
       int unit = std::stoi(unit_string);
 
       Requestor requestor(listener.get());
