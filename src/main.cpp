@@ -14,14 +14,15 @@
 
 int main(int argc, char* argv[]) {
   std::unique_ptr<FakeSmartPortHandler> handler;
-  std::unique_ptr<Responder> responder;
   std::unique_ptr<Listener> listener;
 
   std::cout << R"(
 +-+ SP over SLIP tester v1.0.0 +-+
 
-start <port>      # create listener on port given
-status <port>     # send status request to port
+start <port>      # create listener service on port given
+connect <port>    # create a connection to the service
+status <unit>     # send status request to connection
+devices           # list devices connected
 
 exit              # exit application
 )";
@@ -32,23 +33,29 @@ exit              # exit application
       break;
     }
 
+    // add 2 to string length for the next arg
     if (command.find("start") == 0) {
-      handler = std::make_unique<FakeSmartPortHandler>();
-      responder = std::make_unique<Responder>(std::move(handler));
-
       std::string port_string = command.substr(7, command.find(" ") - 7);
       int port = std::stoi(port_string);
-      listener = std::make_unique<Listener>("127.0.0.1", port, std::move(responder));
+      listener = std::make_unique<Listener>("127.0.0.1", port);
       listener->start();
       std::cout << "Created listener" << std::endl;
     }
 
-    if (command.find("status") == 0) {
-      std::string port_string = command.substr(8, command.find(" ") - 8);
+    if (command.find("connect") == 0) {
+      std::string port_string = command.substr(9, command.find(" ") - 9);
       int port = std::stoi(port_string);
 
-      std::unique_ptr<TCPConnection> connection = std::make_unique<TCPConnection>("127.0.0.1", port);
-      Requestor requestor(std::move(connection));
+      // connect to the listener, and send the capabilities of the fake SP device
+      
+
+    }
+
+    if (command.find("status") == 0) {
+      std::string unit_string = command.substr(8, command.find(" ") - 8);
+      int unit = std::stoi(unit_string);
+
+      Requestor requestor(listener.get());
 
       StatusRequest statusRequest(10, 1, 0);
       auto response = requestor.sendRequest(statusRequest);
@@ -60,7 +67,6 @@ exit              # exit application
       }
     }
 
-    std::cout << "listening still? " << listener->getIsListening() << std::endl;
     std::cout << "> ";
 
   }

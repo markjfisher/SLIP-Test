@@ -1,6 +1,7 @@
 #include "Listener.h"
+#include "TCPConnection.h"
 #include "SLIP.h"
-#include <iostream>
+#include "Util.h"
 
 Listener::~Listener() {
   std::cout << "In listener destructor" << std::endl;
@@ -67,23 +68,14 @@ void Listener::listenerFunction() {
     }
 #endif
 
-    std::cout << "creating thread to handle connection" << std::endl;
+    // do it in a thread so we can respond to more requests as soon as possible
     std::thread([this, new_socket]() {
-      std::cout << "handling connection" << std::endl;
-      handleConnection(new_socket);
-#ifdef _WIN32
-      closesocket(new_socket);
-#else
-      close(new_socket);
-#endif
-      std::cout << "socket closed, should be terminating the thread" << std::endl;
+      createConnection(new_socket);
     }).detach();
-
-    std::cout << "handler thread was created and detach() called" << std::endl;
 
   }
 
-  std::cout << "outside while loop" << std::endl;
+  std::cout << "Listener closing down." << std::endl;
 
 #ifdef _WIN32
   closesocket(server_fd);
@@ -95,7 +87,7 @@ void Listener::listenerFunction() {
 }
 
 // This accepts Request operations, and returns Response data on the same socket.
-void Listener::handleConnection(int socket) {
+void Listener::createConnection(int socket) {
   std::vector<uint8_t> completeData;
   std::vector<uint8_t> buffer(1024);
 
@@ -111,24 +103,29 @@ void Listener::handleConnection(int socket) {
     }
   } while (valread > 0);
 
-  // for every slip packet we received (probably only 1 as this is a 1:1 request to response) process it and send back the response.
+  std::cout << "capability data from incoming connection:" << std::endl;
+  Util::hex_dump(completeData);
+
+  // for every slip packet we received (probably only 1 as this is an initial connection giving us details of capabilities of SP service), get the capabilities, in form of list of Units
+  // which are pairs of int, c-string (ID, Name (0 terminated))
   if (!completeData.empty()) {
     std::vector<std::vector<uint8_t>> packets = SLIP::splitIntoPackets(completeData.data(), completeData.size());
-    for (const auto& packet : packets) {
-      if (!packet.empty()) {
-        std::vector<uint8_t> response = SLIP::encode(responder_->process(packet));
 
-#ifdef _WIN32
-        send(socket, reinterpret_cast<const char *>(response.data()), response.size(), 0);
-#else
-        write(socket, response.data(), response.size());
-#endif
-
+    if (!packets.empty()) {
+      // We have at least some data that might pass as a capability, let's create the Connection object, and use it to parse the data
+      std::unique_ptr<Connection> conn = std::make_unique<TCPConnection>(socket);
+      for (const auto& packet : packets) {
+        if (!packet.empty()) {
+          // create devices from the data
+          conn->addDevices(packet);
+        }
+      }
+      if (!conn->getDevices().empty()) {
+        // this connection is a keeper! it has some devices on it.
+        std::lock_guard<std::mutex> lock(mtx_);
+        connections_.push_back(std::move(conn));
       }
     }
-  }
-  else {
-    // handle no data?
   }
 }
 
@@ -139,4 +136,13 @@ void Listener::start() {
 
 void Listener::stop() {
   is_listening_ = false;
+}
+
+Connection* Listener::findConnectionWithDevice(int deviceId) {
+  for (const auto& connection : connections_) {
+    if (connection->findDevice(deviceId) != nullptr) {
+      return connection.get();
+    }
+  }
+  return nullptr;
 }

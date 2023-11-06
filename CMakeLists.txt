@@ -10,6 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(include)
 
 set(SOURCE_FILES src/main.cpp
+    include/Connection.h src/Connection.cpp
     include/SmartPortHandler.h include/FakeSmartPortHandler.h src/FakeSmartPortHandler.cpp
     include/Listener.h src/Listener.cpp
     include/Requestor.h src/Requestor.cpp

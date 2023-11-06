@@ -5,10 +5,12 @@
 
 class TCPConnection : public Connection {
 public:
-  TCPConnection(const std::string& ip_address, int port);
+  TCPConnection(int socket) : socket_(socket) {}
   virtual std::vector<uint8_t> sendData(const std::vector<uint8_t>& data) override;
 
+  int getSocket() const { return socket_; }
+  void setSocket(int socket) { this->socket_ = socket; }
+
 private:
-  std::string ip_address_;
-  int port_;
+  int socket_;
 };

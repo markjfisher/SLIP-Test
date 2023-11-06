@@ -1,10 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-#include <thread>
-#include <string>
 #include <iostream>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 #ifdef _WIN32
     #include <winsock2.h>
@@ -13,12 +14,12 @@
     #include <netinet/in.h>
     #include <unistd.h>
 #endif
-#include "Responder.h"
+#include "Connection.h"
 
 class Listener {
 public:
-  Listener(const std::string &ip_address, int port, std::unique_ptr<Responder> responder) 
-    : ip_address_(ip_address), port_(port), is_listening_(false), responder_(std::move(responder)) {
+  Listener(const std::string &ip_address, int port) 
+    : ip_address_(ip_address), port_(port), is_listening_(false) {
       std::cout << "Creating Listener" << std::endl;
     }
 
@@ -30,12 +31,15 @@ public:
   std::thread createListenerThread();
   bool getIsListening() { return is_listening_; }
 
+  Connection* findConnectionWithDevice(int deviceId);
+
 private:
-  int port_;
   std::string ip_address_;
-  std::unique_ptr<Responder> responder_;
+  int port_;
+  std::mutex mtx_;
+  std::vector<std::unique_ptr<Connection>> connections_;
 
   bool is_listening_;
-  void handleConnection(int socket);
+  void createConnection(int socket);
   void listenerFunction();
 };

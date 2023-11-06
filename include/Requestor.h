@@ -7,11 +7,11 @@
 
 class Requestor {
 public:
-  Requestor(std::unique_ptr<Connection> connection);
+  Requestor(Listener* listener) : listener_(listener) {}
 
   // The Request's deserialize function will always return a Response, e.g. StatusRequest -> StatusResponse
   std::unique_ptr<Response> sendRequest(const Request& request);
 
 private:
-  std::unique_ptr<Connection> connection_;
+  Listener* listener_;
 };
