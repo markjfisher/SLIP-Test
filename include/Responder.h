@@ -7,6 +7,10 @@
 
 #include "SmartPortHandler.h"
 
+// A Responder class is independent of any Connection implementation.
+// It uses its SmartPortHandler to process requests, and converts that into the serialized vector of bytes to be returned.
+// It is the Connection implementation (which owns the Responder) that decides how to send the response data back.
+// No SLIP encoding or decoding done here, everything is based on serialized objects.
 class Responder {
 
 public:

@@ -82,10 +82,11 @@ std::vector<uint8_t> SLIP::decode(const std::vector<uint8_t>& data) {
   return decoded_data;
 }
 
-
+// This breaks up a vector of data into a list of decoded vectors of serialized objects.
+// The returned data is already "SLIP::decode"d
 std::vector<std::vector<uint8_t>> SLIP::splitIntoPackets(const uint8_t* data, size_t bytes_read) {
   // The list of decoded SLIP packets
-  std::vector<std::vector<uint8_t>> packets;
+  std::vector<std::vector<uint8_t>> decoded_packets;
 
   enum class State {
     NotParsing,
@@ -94,22 +95,27 @@ std::vector<std::vector<uint8_t>> SLIP::splitIntoPackets(const uint8_t* data, si
 
   // Iterate over the data and find the SLIP packet boundaries
   size_t i = 0;
+  const uint8_t* packet_start = nullptr;  // Keep track of where the packet starts
   while (i < bytes_read) {
     switch (state) {
       case State::NotParsing:
-        // If we see a SLIP_END byte, start parsing a new SLIP packet
+        // If we are not yet parsing and see a SLIP_END byte (which also marks start), start parsing a new SLIP packet
         if (data[i] == SLIP_END) {
           state = State::Parsing;
+          packet_start = data + i;  // Mark the start of the packet
         }
         break;
       case State::Parsing:
+        std::cout << "PARSING" << std::endl;
         // If we see another SLIP_END byte, we have reached the end of the SLIP packet
         if (data[i] == SLIP_END) {
+          // std::cout << "processing END, packet to decode:" << std::endl;
           // Extract the SLIP packet data
-          std::vector<uint8_t> slip_packet_data(data + i - 1, data + i);
+          std::vector<uint8_t> slip_packet_data(packet_start, data + i + 1);  // Include all bytes in the packet
+          // Util::hex_dump(slip_packet_data);
 
-          // Add the SLIP packet data to the list of SLIP packets
-          packets.push_back(SLIP::decode(slip_packet_data));
+          // Add the data to the list of SLIP decoded packets
+          decoded_packets.push_back(SLIP::decode(slip_packet_data));
 
           // Transition back to the NotParsing state
           state = State::NotParsing;
@@ -119,5 +125,5 @@ std::vector<std::vector<uint8_t>> SLIP::splitIntoPackets(const uint8_t* data, si
     i++;
   }
 
-  return packets;
+  return decoded_packets;
 }

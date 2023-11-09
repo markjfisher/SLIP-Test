@@ -9,7 +9,9 @@ std::unique_ptr<Response> Requestor::sendRequest(const Request& request) {
   auto connection = listener_->findConnectionWithDevice(request.get_sp_unit());
 
   // Send the serialized request
-  auto response_data = connection->sendData(request.serialize());
+  connection->sendData(request.serialize());
+
+  // TODO: wait around for a response, or timeout...
 
   // Deserialize the response data into a Response object.
   // Each Request type (e.g. StatusRequest) is able to deserialize into its twin Response (e.g. StatusResponse).

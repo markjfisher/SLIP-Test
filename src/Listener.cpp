@@ -1,7 +1,12 @@
+#include <atomic>
+#include <cstring>
+
 #include "Listener.h"
 #include "TCPConnection.h"
 #include "SLIP.h"
 #include "Util.h"
+
+std::atomic<bool> stopListenerThread = false;
 
 Listener::~Listener() {
   std::cout << "In listener destructor" << std::endl;
@@ -22,6 +27,7 @@ void Listener::listenerFunction() {
   WSAStartup(MAKEWORD(2, 2), &wsaData);
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
     std::cerr << "socket creation failed" << std::endl;
+    exit(EXIT_FAILURE);
   }
 #else
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -86,7 +92,9 @@ void Listener::listenerFunction() {
 
 }
 
-// This accepts Request operations, and returns Response data on the same socket.
+// Creates a Connecton object, which is how a SP will register itself with our listener.
+// When it connects, it tells us all the available unit IDs and names available to service requests.
+// That connection will then be used to send requests to, and get responses back from.
 void Listener::createConnection(int socket) {
   std::vector<uint8_t> completeData;
   std::vector<uint8_t> buffer(1024);
@@ -106,15 +114,18 @@ void Listener::createConnection(int socket) {
   std::cout << "capability data from incoming connection:" << std::endl;
   Util::hex_dump(completeData);
 
-  // for every slip packet we received (probably only 1 as this is an initial connection giving us details of capabilities of SP service), get the capabilities, in form of list of Units
+  // for every slip packet we received (probably only 1 as this is an initial connection) 
   // which are pairs of int, c-string (ID, Name (0 terminated))
   if (!completeData.empty()) {
     std::vector<std::vector<uint8_t>> packets = SLIP::splitIntoPackets(completeData.data(), completeData.size());
+    std::cout << "packets size: " << packets.size() << ", completeData size: " << completeData.size() << std::endl;
 
     if (!packets.empty()) {
       // We have at least some data that might pass as a capability, let's create the Connection object, and use it to parse the data
       std::unique_ptr<Connection> conn = std::make_unique<TCPConnection>(socket);
       for (const auto& packet : packets) {
+        std::cout << ".. packet:" << std::endl;
+        Util::hex_dump(packet);
         if (!packet.empty()) {
           // create devices from the data
           conn->addDevices(packet);
@@ -122,8 +133,14 @@ void Listener::createConnection(int socket) {
       }
       if (!conn->getDevices().empty()) {
         // this connection is a keeper! it has some devices on it.
-        std::lock_guard<std::mutex> lock(mtx_);
-        connections_.push_back(std::move(conn));
+        conn->setIsConnected(true);
+        // create a closure, so the mutex is released as it goes out of scope
+        {
+          std::lock_guard<std::mutex> lock(mtx_);
+          connections_.push_back(std::move(conn));
+        } // mtx_ unlocked here
+        conn->createReadChannel();
+
       }
     }
   }

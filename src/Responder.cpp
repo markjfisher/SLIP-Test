@@ -2,11 +2,13 @@
 #include <memory>
 #include <sstream>
 #include <memory>
-#include "SLIP.h"
 #include "Responder.h"
 
+// This works on individual serialised objects that have already been decoded,
+// and returns serialised data. It does NOT slip encode them.
+
 std::vector<uint8_t> Responder::process(const std::vector<uint8_t>& packet) {
-  // Convert each packet's "command" into the appropriate Request object, let the smart port handler process it, then slip encode the response and return the data
+  // Convert each packet's "command" into the appropriate Request object, let the smart port handler process it
 
   std::unique_ptr<Response> response;
   std::unique_ptr<Request> request;
@@ -46,5 +48,5 @@ std::vector<uint8_t> Responder::process(const std::vector<uint8_t>& packet) {
   }
   }
 
-  return SLIP::encode(response->serialize());
+  return response->serialize();
 }
