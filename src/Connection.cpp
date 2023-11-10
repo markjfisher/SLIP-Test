@@ -1,6 +1,8 @@
 #include <vector>
 #include <cstdint>
 #include <iostream>
+#include <mutex>
+#include <condition_variable>
 #include "Connection.h"
 
 int Connection::deviceIndex_ = 0;
@@ -45,4 +47,15 @@ void Connection::addDevices(const std::vector<uint8_t>& data) {
     // Add the Device to the devices vector
     devices_.push_back({++deviceIndex_, {unitId, unitName}});
   }
+}
+
+std::vector<uint8_t> Connection::waitForResponse(int requestId, std::chrono::seconds timeout) {
+  std::unique_lock<std::mutex> lock(responses_mutex_);
+  // mutex is unlocked as it goes into a wait, so then the inserting thread can add to map, and this can then pick it up when notified, or timeout.
+  if(!response_cv_.wait_for(lock, timeout, [this, requestId]() { return responses_.count(requestId) > 0; })) {
+    throw std::runtime_error("Timeout waiting for response");
+  }
+  std::vector<uint8_t> responseData = responses_[requestId];
+  responses_.erase(requestId);
+  return responseData;
 }

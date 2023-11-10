@@ -1,9 +1,13 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <cstdint>
 #include <string>
+#include <mutex>
+#include <condition_variable>
 #include <utility>
+#include <chrono>
 
 class Connection {
 public:
@@ -18,7 +22,7 @@ public:
   };
 
   virtual ~Connection() = default;
-  virtual std::vector<uint8_t> sendData(const std::vector<uint8_t>& data) = 0;
+  virtual void sendData(const std::vector<uint8_t>& data) = 0;
 
   virtual void createReadChannel() = 0;
 
@@ -29,8 +33,16 @@ public:
   bool isConnected() { return is_connected_; }
   void setIsConnected(bool is_connected) { is_connected_ = is_connected; }
 
+  std::vector<uint8_t> waitForResponse(int requestId, std::chrono::seconds timeout);
+
 private:
   bool is_connected_;
   std::vector<Device> devices_;
   static int deviceIndex_;
+
+protected:
+  std::map<uint8_t, std::vector<uint8_t>> responses_;
+
+  std::mutex responses_mutex_;
+  std::condition_variable response_cv_;
 };

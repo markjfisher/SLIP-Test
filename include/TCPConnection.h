@@ -7,7 +7,7 @@
 class TCPConnection : public Connection, public std::enable_shared_from_this<TCPConnection> {
 public:
   TCPConnection(int socket) : socket_(socket) {}
-  virtual std::vector<uint8_t> sendData(const std::vector<uint8_t>& data) override;
+  virtual void sendData(const std::vector<uint8_t>& data) override;
   virtual void createReadChannel() override;
 
   int getSocket() const { return socket_; }

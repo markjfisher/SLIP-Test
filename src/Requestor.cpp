@@ -11,7 +11,14 @@ std::unique_ptr<Response> Requestor::sendRequest(const Request& request) {
   // Send the serialized request
   connection->sendData(request.serialize());
 
-  // TODO: wait around for a response, or timeout...
+  std::vector<uint8_t> response_data;
+  // Wait for a response, or timeout...
+  try {
+    response_data = connection->waitForResponse(request.get_request_sequence_number(), std::chrono::seconds(20));
+  } catch (const std::runtime_error& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    return nullptr;
+  }
 
   // Deserialize the response data into a Response object.
   // Each Request type (e.g. StatusRequest) is able to deserialize into its twin Response (e.g. StatusResponse).

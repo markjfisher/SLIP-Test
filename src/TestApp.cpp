@@ -1,10 +1,10 @@
 
 #include <iostream>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <iomanip>
 #include <thread>
-#include <cstring>
 
 #include "TestApp.h"
 
@@ -42,7 +42,7 @@ void TestApp::checkStatus(std::string command) {
   }
 }
 
-void TestAPp::closeConnection(int sock) {
+void TestApp::closeConnection(int sock) {
 #ifdef _WIN32
     closesocket(sock);
     WSACleanup();
@@ -101,9 +101,9 @@ void TestApp::connectToServer(std::string command) {
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_port = htons(port);
 #ifdef _WIN32
-  if (InetPton(AF_INET, TEXT(address), &serverAddr.sin_addr) <= 0) {
+  if (InetPton(AF_INET, TEXT(address.c_str()), &serverAddr.sin_addr) <= 0) {
 #else
-  if (inet_pton(AF_INET, address, &serverAddr.sin_addr) <= 0) {
+  if (inet_pton(AF_INET, address.c_str(), &serverAddr.sin_addr) <= 0) {
 #endif
     std::cerr << "Failed to set server address: " << strerror(errno) << std::endl;
     closeConnection(sock);
@@ -127,7 +127,7 @@ void TestApp::connectToServer(std::string command) {
 
   if (res < 0) {
     std::cerr << "Failed to send data: " << strerror(errno) << std::endl;
-    closeConnection();
+    closeConnection(sock);
     return;
   }
 

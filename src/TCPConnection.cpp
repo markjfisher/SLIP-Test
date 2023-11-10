@@ -133,8 +133,12 @@ void TCPConnection::createReadChannel() {
               // Heartbeat request, respond with an empty packet.
               // TODO
             } else {
-              // Data originating from a Request, this is its response.
-              
+              // Data originating from a Request, this is its response, put it in the map until it's read.
+              {
+                std::lock_guard<std::mutex> lock(self->responses_mutex_);
+                self->responses_[packet[0]] = packet;              
+              }
+              self->response_cv_.notify_all();
             }
           }
         }
