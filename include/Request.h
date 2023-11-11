@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <sstream>
 #include <stdint.h>
 #include "Response.h"
 #include "SPoSLIP.h"
@@ -19,6 +20,21 @@ public:
 
   uint8_t get_sp_unit() const { return sp_unit_; }
   void set_sp_unit(uint8_t sp_unit) { sp_unit_ = sp_unit; }
+
+  virtual std::string toString() const {
+    std::stringstream ss;
+    ss << "Request: {";
+    ss << "seq_number = " << static_cast<unsigned int>(get_request_sequence_number());
+    ss << ", command_number = " << static_cast<unsigned int>(command_number_);
+    ss << ", sp_unit = " << static_cast<unsigned int>(sp_unit_);
+    ss << "}";
+    return ss.str();
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Request& request) {
+    os << request.toString();
+    return os;
+  }
 
 private:
   uint8_t command_number_;

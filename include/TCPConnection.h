@@ -13,6 +13,8 @@ public:
   int getSocket() const { return socket_; }
   void setSocket(int socket) { this->socket_ = socket; }
 
+  std::string toString() override;
+
 private:
   int socket_;
 };

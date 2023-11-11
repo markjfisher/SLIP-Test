@@ -13,16 +13,25 @@
 #include "TCPConnection.h"
 #include "Listener.h"
 #include "Requestor.h"
+#include "Responder.h"
 #include "StatusRequest.h"
 #include "StatusResponse.h"
 #include "FakeSmartPortHandler.h"
 
 void TestApp::startListener(std::string command) {
-  std::string port_string = command.substr(6);
-  int port = std::stoi(port_string);
-  listener_ = std::make_unique<Listener>("127.0.0.1", port);
+  std::istringstream iss(command);
+  std::string word;
+  iss >> word;  // Skip "start"
+
+  std::string address;
+  iss >> address; // read the host address
+
+  int port;
+  iss >> port;  // Read port number
+
+  listener_ = std::make_unique<Listener>(address, port);
   listener_->start();
-  std::cout << "Created listener on port " << port_string << std::endl;
+  std::cout << "Created listener to " << address << ":" << port << std::endl;
 }
 
 void TestApp::checkStatus(std::string command) {
@@ -32,11 +41,11 @@ void TestApp::checkStatus(std::string command) {
 
   Requestor requestor(listener_.get());
 
-  StatusRequest statusRequest(10, 1, 0);
+  StatusRequest statusRequest(10, static_cast<uint8_t>(unit), 0);
   auto response = requestor.sendRequest(statusRequest);
   StatusResponse* statusResponse = dynamic_cast<StatusResponse*>(response.get());
   if (statusResponse != nullptr) {
-    std::cout << "Found valid status response:" << statusResponse->get_status() << std::endl;
+    std::cout << "Found valid status response:" << static_cast<unsigned int>(statusResponse->get_status()) << std::endl;
   } else {
     std::cout << "error casting to StatusResponse" << std::endl;
   }
@@ -116,6 +125,7 @@ void TestApp::connectToServer(std::string command) {
     closeConnection(sock);
     return;
   }
+  std::cout << "Connected to target, sending capability data" << std::endl;
 
   // Send the data
   auto slip_data = SLIP::encode(data);
@@ -131,12 +141,37 @@ void TestApp::connectToServer(std::string command) {
     return;
   }
 
-  sockets_.push_back(sock);
-  // TODO: Create the ReadChannel on client side, and react to packets. See TCPConnection::createReadChannel
+  std::cout << "Creating TCPConnection for sock " << static_cast<unsigned int>(sock) << std::endl;
+  std::shared_ptr<Connection> conn = std::make_shared<TCPConnection>(sock);
+
+  conn->setIsConnected(true);
+  std::cout << "Creating a Read Channel" << std::endl;
+  conn->createReadChannel();
+
+  std::cout << "Creating Handler" << std::endl;
+  // Now create a smartport handler and responder for servicing requests.
+  std::unique_ptr<SmartPortHandler> handler = std::make_unique<FakeSmartPortHandler>();
+
+  std::cout << "Creating Responder" << std::endl;
+  // Create a Responder with the handler and the connection
+  std::unique_ptr<Responder> responder = std::make_unique<Responder>(std::move(handler), conn);
+
+  std::thread thread(&Responder::waitForRequests, responder.get());
+  thread.detach();
+
+  std::cout << "Adding to list Responder" << std::endl;
+  // add responder to list
+  responders_.push_back(std::move(responder));
 
 }
 
-
 void TestApp::shutdown() {
+}
 
+void TestApp::info() {
+  if (listener_) {
+    std::cout << listener_->toString() << std::endl;
+  } else {
+    std::cout << "No listener" << std::endl;
+  }
 }

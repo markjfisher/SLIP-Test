@@ -3,10 +3,11 @@
 #include "Listener.h"
 
 std::unique_ptr<Response> Requestor::sendRequest(const Request& request) {
-  std::cout << "Requestor::sendRequest" << std::endl;
+  std::cout << "Requestor::sendRequest, request: " << request << std::endl;
 
   // get a connection that will service our request
   auto connection = listener_->findConnectionWithDevice(request.get_sp_unit());
+  std::cout << "Found connection: " << connection->toString() << std::endl;
 
   // Send the serialized request
   connection->sendData(request.serialize());

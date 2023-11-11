@@ -9,14 +9,14 @@ int main(int argc, char* argv[]) {
   std::cout << R"(
 +-+ SP over SLIP tester v1.0.0 +-+
 
-start port             # create listener service on port given
+start address port     # create listener service on address:port given
 
 # create a connection with at hostname/port with name, where data is "1,NETWORK,2,..." etc
 connect hostname port name data
 
 status unit            # send status request to listener for SP unit
 
-devices                # list devices connected
+info                   # display listener info
 connections            # list connections
 
 exit              # exit application
@@ -35,11 +35,21 @@ exit              # exit application
     }
 
     if (command.find("connect") == 0) {
+      std::cout << "---------- CONNECT START" << std::endl;
       app.connectToServer(command);
+      std::cout << "---------- CONNECT END" << std::endl;
     }
 
     if (command.find("status") == 0) {
       app.checkStatus(command);
+    }
+
+    if (command.find("info") == 0) {
+      app.info();
+    }
+
+    if (command.find("connections") == 0) {
+      // app.listConnections();
     }
 
     std::cout << "> ";

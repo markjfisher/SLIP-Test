@@ -106,11 +106,13 @@ void Listener::createConnection(int socket) {
 #else
     valread = read(socket, buffer.data(), buffer.size());
 #endif
+    std::cout << "Listener::createConnection, recieved " << valread << " bytes" << std::endl;
     if (valread > 0) {
       completeData.insert(completeData.end(), buffer.begin(), buffer.begin() + valread);
     }
-  } while (valread > 0);
+  } while (valread == 1024);
 
+  int cdSize = static_cast<unsigned int>(completeData.size());
   std::cout << "capability data from incoming connection:" << std::endl;
   Util::hex_dump(completeData);
 
@@ -122,25 +124,31 @@ void Listener::createConnection(int socket) {
 
     if (!packets.empty()) {
       // We have at least some data that might pass as a capability, let's create the Connection object, and use it to parse the data
-      std::unique_ptr<Connection> conn = std::make_unique<TCPConnection>(socket);
+      std::shared_ptr<Connection> conn = std::make_shared<TCPConnection>(socket);
       for (const auto& packet : packets) {
         std::cout << ".. packet:" << std::endl;
         Util::hex_dump(packet);
         if (!packet.empty()) {
+          std::cout << ".. adding devices" << std::endl;
           // create devices from the data
           conn->addDevices(packet);
+          std::cout << ".. added devices" << std::endl;
         }
       }
       if (!conn->getDevices().empty()) {
+        std::cout << ".. found devices, setting connected, then adding to connections" << std::endl;
         // this connection is a keeper! it has some devices on it.
         conn->setIsConnected(true);
+        std::cout << ".. creating read channel" << std::endl;
+        conn->createReadChannel();
+        std::cout << ".. read channel created" << std::endl;
         // create a closure, so the mutex is released as it goes out of scope
         {
+          std::cout << ".. getting lock" << std::endl;
           std::lock_guard<std::mutex> lock(mtx_);
-          connections_.push_back(std::move(conn));
+          std::cout << ".. got it, adding to connections_" << std::endl;
+          connections_.push_back(conn);
         } // mtx_ unlocked here
-        conn->createReadChannel();
-
       }
     }
   }
@@ -162,4 +170,19 @@ Connection* Listener::findConnectionWithDevice(int deviceId) {
     }
   }
   return nullptr;
+}
+
+std::string Listener::toString() {
+  std::stringstream ss;
+  ss << "Listener: ip_address = " << ip_address_ << ", port = " << port_ << ", is_listening = " << (is_listening_ ? "true" : "false") << ", connections = [";
+  for (const auto& connection : connections_) {
+    ss << connection->toString() << ", ";
+  }
+  std::string str = ss.str();
+  if (!connections_.empty()) {
+    // Remove the last comma and space
+    str = str.substr(0, str.size() - 2);
+  }
+  str += "]";
+  return str;
 }

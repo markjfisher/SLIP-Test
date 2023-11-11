@@ -8,6 +8,7 @@
 #include <condition_variable>
 #include <utility>
 #include <chrono>
+#include <sstream>
 
 class Connection {
 public:
@@ -34,6 +35,9 @@ public:
   void setIsConnected(bool is_connected) { is_connected_ = is_connected; }
 
   std::vector<uint8_t> waitForResponse(int requestId, std::chrono::seconds timeout);
+  std::vector<uint8_t> waitForRequest();
+
+  virtual std::string toString();
 
 private:
   bool is_connected_;

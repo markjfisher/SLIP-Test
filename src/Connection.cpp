@@ -4,6 +4,7 @@
 #include <mutex>
 #include <condition_variable>
 #include "Connection.h"
+#include "Util.h"
 
 int Connection::deviceIndex_ = 0;
 
@@ -58,4 +59,31 @@ std::vector<uint8_t> Connection::waitForResponse(int requestId, std::chrono::sec
   std::vector<uint8_t> responseData = responses_[requestId];
   responses_.erase(requestId);
   return responseData;
+}
+
+std::vector<uint8_t> Connection::waitForRequest() {
+  std::unique_lock<std::mutex> lock(responses_mutex_);
+  response_cv_.wait(lock, [this]() { return responses_.size() > 0; });
+  std::cout << "after wait for request block, got data!" << std::endl;
+  auto it = responses_.begin();
+  std::vector<uint8_t> requestData = it->second;
+  responses_.erase(it);
+  std::cout << "request data:" << std::endl;
+  Util::hex_dump(requestData);
+  return requestData;
+}
+
+std::string Connection::toString() {
+  std::stringstream ss;
+  ss << "Connection: isConnected = " << (is_connected_ ? "true" : "false") << ", devices = [";
+  for (auto it = devices_.begin(); it != devices_.end(); ++it) {
+    ss << "{deviceIndex = " << it->deviceIndex
+       << ", capability = {unitId = " << it->capability.unitId
+       << ", name = " << it->capability.name << "}}";
+    if (std::next(it) != devices_.end()) {
+      ss << ", ";
+    }
+  }
+  ss << "]";
+  return ss.str();
 }

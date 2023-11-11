@@ -37,11 +37,13 @@ public:
 
   Connection* findConnectionWithDevice(int deviceId);
 
+  std::string toString();
+
 private:
   std::string ip_address_;
   int port_;
   std::mutex mtx_;
-  std::vector<std::unique_ptr<Connection>> connections_;
+  std::vector<std::shared_ptr<Connection>> connections_;
 
   bool is_listening_;
   void createConnection(int socket);

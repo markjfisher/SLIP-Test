@@ -15,6 +15,15 @@ public:
   uint8_t get_status_code() const { return status_code_; }
   void set_status_code(uint8_t status_code) { status_code_ = status_code; }
 
+  std::string toString() const override {
+    std::stringstream ss;
+    ss << "StatusRequest: {";
+    ss << "status_code = " << static_cast<unsigned int>(status_code_);
+    ss << ", Request: " << Request::toString();
+    ss << "}";
+    return ss.str();
+  }
+
 private:
   uint8_t status_code_;
 

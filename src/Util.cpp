@@ -20,4 +20,6 @@ void Util::hex_dump(const std::vector<uint8_t>& data) {
 
         offset += bytes_per_line;
     }
+    std::cout << std::dec;
+
 }

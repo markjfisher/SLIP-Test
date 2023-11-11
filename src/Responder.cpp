@@ -4,17 +4,14 @@
 #include <memory>
 #include "Responder.h"
 
-// This works on individual serialised objects that have already been decoded,
-// and returns serialised data. It does NOT slip encode them.
-
-std::vector<uint8_t> Responder::process(const std::vector<uint8_t>& packet) {
+void Responder::processRequestData(const std::vector<uint8_t>& packet) {
   // Convert each packet's "command" into the appropriate Request object, let the smart port handler process it
 
   std::unique_ptr<Response> response;
   std::unique_ptr<Request> request;
 
   uint8_t command = packet[1];
-  std::cout << "Responder::process for command: " << command << std::endl;
+  std::cout << "Responder::processRequestData for command: " << command << std::endl;
   switch(command) {
 
   case SP_STATUS:
@@ -45,8 +42,19 @@ std::vector<uint8_t> Responder::process(const std::vector<uint8_t>& packet) {
     std::ostringstream oss;
     oss << "Unknown command: %d" << command;
     throw std::runtime_error(oss.str());
-  }
+    break;
   }
 
-  return response->serialize();
+  }
+
+  auto response_data = response->serialize();
+  connection_->sendData(response_data);
+}
+
+void Responder::waitForRequests() {
+  std::cout << "starting waitForRequests in responder" << std::endl;
+  while (true) {
+    auto request_data = connection_->waitForRequest();
+    processRequestData(request_data);
+  }
 }

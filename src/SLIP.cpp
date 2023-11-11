@@ -106,7 +106,6 @@ std::vector<std::vector<uint8_t>> SLIP::splitIntoPackets(const uint8_t* data, si
         }
         break;
       case State::Parsing:
-        std::cout << "PARSING" << std::endl;
         // If we see another SLIP_END byte, we have reached the end of the SLIP packet
         if (data[i] == SLIP_END) {
           // std::cout << "processing END, packet to decode:" << std::endl;

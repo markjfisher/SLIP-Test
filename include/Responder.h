@@ -6,21 +6,20 @@
 #include <iostream>
 
 #include "SmartPortHandler.h"
+#include "Connection.h"
 
-// A Responder class is independent of any Connection implementation.
+// A Responder class
 // It uses its SmartPortHandler to process requests, and converts that into the serialized vector of bytes to be returned.
-// It is the Connection implementation (which owns the Responder) that decides how to send the response data back.
-// No SLIP encoding or decoding done here, everything is based on serialized objects.
 class Responder {
 
 public:
-  Responder(std::unique_ptr<SmartPortHandler> handler)
-    : smartPortHandler_(std::move(handler)) {
-      std::cout << "Creating Responder" << std::endl;
-    }
+  Responder(std::unique_ptr<SmartPortHandler> handler, std::shared_ptr<Connection> connection)
+    : smartPortHandler_(std::move(handler)), connection_(connection) {}
 
-  std::vector<uint8_t> process(const std::vector<uint8_t>& packet);
+  void processRequestData(const std::vector<uint8_t>& packet);
+  void waitForRequests();
 
 private:
   std::unique_ptr<SmartPortHandler> smartPortHandler_;
+  std::shared_ptr<Connection> connection_;
 };
