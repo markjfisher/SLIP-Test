@@ -11,7 +11,11 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
   std::unique_ptr<Request> request;
 
   uint8_t command = packet[1];
-  std::cout << "Responder::processRequestData for command: " << command << std::endl;
+
+#ifdef DEBUG
+  std::cout << "Responder::processRequestData, command: " << static_cast<unsigned int>(command) << std::endl;
+#endif
+
   switch(command) {
 
   case SP_STATUS:
@@ -52,8 +56,8 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
 }
 
 void Responder::waitForRequests() {
-  std::cout << "starting waitForRequests in responder" << std::endl;
   while (true) {
+    // Keep listening for incoming requests
     auto request_data = connection_->waitForRequest();
     processRequestData(request_data);
   }

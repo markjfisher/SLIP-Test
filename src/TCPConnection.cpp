@@ -18,8 +18,10 @@
 #include "Util.h"
 
 void TCPConnection::sendData(const std::vector<uint8_t>& data) {
+#ifdef DEBUG
   std::cout << "TCPConnection::sendData, sending data:" << std::endl;
   Util::hex_dump(data);
+#endif
 
   if (data.empty()) {
     std::cerr << "TCPConnection::sendData No data was given to send" << std::endl;
@@ -38,12 +40,8 @@ void TCPConnection::sendData(const std::vector<uint8_t>& data) {
 }
 
 void TCPConnection::createReadChannel() {
-
-  std::cout << "TCPConnection::createReadChannel() - creating thread" << std::endl;
   // Start a new thread to listen for incoming data
   std::thread readingThread([self = shared_from_this()]() {
-    
-    std::cout << "TCPConnection::createReadChannel():readingThread - In thread, socket: " << self->getSocket() << ", connected: " << self->isConnected() << std::endl;
     std::vector<uint8_t> completeData;
     std::vector<uint8_t> buffer(1024);
 
@@ -64,7 +62,7 @@ void TCPConnection::createReadChannel() {
         int errsv = errno;
         if (valread < 0) {
           // timeout is fine, just reloop.
-          if (errno == EAGAIN || errno == EWOULDBLOCK || errno == 0) {
+          if (errno == EAGAIN || errno == EWOULDBLOCK || errsv == 0) {
             continue;
           }
           // otherwise it was a genuine error.
@@ -72,8 +70,7 @@ void TCPConnection::createReadChannel() {
           self->setIsConnected(false);
         }
         if (valread == 0) {
-          // disconnected, close connection, should remove it to: TODO
-          std::cout << "Connection closed" << std::endl;
+          // disconnected, close connection, should remove it too: TODO
           self->setIsConnected(false);
         }
         if (valread > 0) {
@@ -86,8 +83,9 @@ void TCPConnection::createReadChannel() {
         if (!decoded_packets.empty()) {
           for (const auto& packet : decoded_packets) {
             if (!packet.empty()) {
+#ifdef DEBUG
               std::cout << "putting packet in responses map for request id " << static_cast<unsigned int>(packet[0]) << std::endl;
-              // Put the data in the map until it's read.
+#endif
               {
                 std::lock_guard<std::mutex> lock(self->responses_mutex_);
                 self->responses_[packet[0]] = packet;              
@@ -99,14 +97,8 @@ void TCPConnection::createReadChannel() {
         completeData.clear();
       }
     }
-    std::cout << "TCP Connection thread exiting." << std::endl;
   });
-
-  std::cout << "TCPConnection::createReadChannel() - Thread created, detaching" << std::endl;
-
-  // Detach the thread so it runs independently
   readingThread.detach();
-
 }
 
   std::string TCPConnection::toString() {

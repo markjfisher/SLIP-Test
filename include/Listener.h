@@ -23,9 +23,7 @@
 class Listener {
 public:
   Listener(const std::string &ip_address, int port) 
-  : ip_address_(ip_address), port_(port), is_listening_(false) {
-      std::cout << "Creating Listener" << std::endl;
-    }
+  : ip_address_(ip_address), port_(port), is_listening_(false) {}
 
   ~Listener();
 

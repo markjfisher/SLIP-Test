@@ -35,9 +35,7 @@ exit              # exit application
     }
 
     if (command.find("connect") == 0) {
-      std::cout << "---------- CONNECT START" << std::endl;
       app.connectToServer(command);
-      std::cout << "---------- CONNECT END" << std::endl;
     }
 
     if (command.find("status") == 0) {
@@ -55,6 +53,5 @@ exit              # exit application
     std::cout << "> ";
 
   }
-  std::cout << "Tumbling out of main" << std::endl;
   return 0;
 }

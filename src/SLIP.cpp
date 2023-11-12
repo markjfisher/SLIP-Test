@@ -26,9 +26,11 @@ std::vector<uint8_t> SLIP::encode(const std::vector<uint8_t>& data) {
 }
 
 std::vector<uint8_t> SLIP::decode(const std::vector<uint8_t>& data) {
-  std::cout << "SLIP::decode" << std::endl;
-  Util::hex_dump(data);
 
+#ifdef DEBUG
+  std::cout << "SLIP::decode, data:" << std::endl;
+  Util::hex_dump(data);
+#endif
 
   std::vector<uint8_t> decoded_data;
   auto bytes_read = data.size();
@@ -76,8 +78,10 @@ std::vector<uint8_t> SLIP::decode(const std::vector<uint8_t>& data) {
     i++;
   }
 
-  std::cout << "SLIP::decode, sending decoded data:" << std::endl;
+#ifdef DEBUG
+  std::cout << "SLIP::decode, decoded data:" << std::endl;
   Util::hex_dump(decoded_data);
+#endif
 
   return decoded_data;
 }
@@ -108,10 +112,8 @@ std::vector<std::vector<uint8_t>> SLIP::splitIntoPackets(const uint8_t* data, si
       case State::Parsing:
         // If we see another SLIP_END byte, we have reached the end of the SLIP packet
         if (data[i] == SLIP_END) {
-          // std::cout << "processing END, packet to decode:" << std::endl;
           // Extract the SLIP packet data
           std::vector<uint8_t> slip_packet_data(packet_start, data + i + 1);  // Include all bytes in the packet
-          // Util::hex_dump(slip_packet_data);
 
           // Add the data to the list of SLIP decoded packets
           decoded_packets.push_back(SLIP::decode(slip_packet_data));

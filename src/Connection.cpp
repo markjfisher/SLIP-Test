@@ -64,12 +64,15 @@ std::vector<uint8_t> Connection::waitForResponse(int requestId, std::chrono::sec
 std::vector<uint8_t> Connection::waitForRequest() {
   std::unique_lock<std::mutex> lock(responses_mutex_);
   response_cv_.wait(lock, [this]() { return responses_.size() > 0; });
-  std::cout << "after wait for request block, got data!" << std::endl;
   auto it = responses_.begin();
   std::vector<uint8_t> requestData = it->second;
   responses_.erase(it);
-  std::cout << "request data:" << std::endl;
+
+#ifdef DEBUG
+  std::cout << "Connection::waitForRequest, request data:" << std::endl;
   Util::hex_dump(requestData);
+#endif
+
   return requestData;
 }
 

@@ -36,7 +36,6 @@ void TestApp::startListener(std::string command) {
 
 void TestApp::checkStatus(std::string command) {
   std::string unit_string = command.substr(7);
-  std::cout << "unit_string: >" << unit_string << "<" << std::endl;
   int unit = std::stoi(unit_string);
 
   Requestor requestor(listener_.get());
@@ -47,7 +46,7 @@ void TestApp::checkStatus(std::string command) {
   if (statusResponse != nullptr) {
     std::cout << "Found valid status response:" << static_cast<unsigned int>(statusResponse->get_status()) << std::endl;
   } else {
-    std::cout << "error casting to StatusResponse" << std::endl;
+    std::cout << "error casting to StatusResponse (probably timed out sending)" << std::endl;
   }
 }
 
@@ -141,28 +140,20 @@ void TestApp::connectToServer(std::string command) {
     return;
   }
 
-  std::cout << "Creating TCPConnection for sock " << static_cast<unsigned int>(sock) << std::endl;
   std::shared_ptr<Connection> conn = std::make_shared<TCPConnection>(sock);
-
   conn->setIsConnected(true);
-  std::cout << "Creating a Read Channel" << std::endl;
   conn->createReadChannel();
 
-  std::cout << "Creating Handler" << std::endl;
   // Now create a smartport handler and responder for servicing requests.
   std::unique_ptr<SmartPortHandler> handler = std::make_unique<FakeSmartPortHandler>();
 
-  std::cout << "Creating Responder" << std::endl;
   // Create a Responder with the handler and the connection
   std::unique_ptr<Responder> responder = std::make_unique<Responder>(std::move(handler), conn);
 
   std::thread thread(&Responder::waitForRequests, responder.get());
   thread.detach();
 
-  std::cout << "Adding to list Responder" << std::endl;
-  // add responder to list
   responders_.push_back(std::move(responder));
-
 }
 
 void TestApp::shutdown() {

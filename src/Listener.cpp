@@ -9,7 +9,6 @@
 std::atomic<bool> stopListenerThread = false;
 
 Listener::~Listener() {
-  std::cout << "In listener destructor" << std::endl;
   stop();
 }
 
@@ -21,7 +20,6 @@ void Listener::listenerFunction() {
   int server_fd, new_socket;
   struct sockaddr_in address;
   int addrlen = sizeof(address);
-  std::cout << "In listenerFunction, creating socket" << std::endl;
 #ifdef _WIN32
   WSADATA wsaData;
   WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -41,7 +39,6 @@ void Listener::listenerFunction() {
   address.sin_port = htons(port_);
   address.sin_addr.s_addr = inet_addr(ip_address_.c_str());
 
-  std::cout << "... binding" << std::endl;
 #ifdef _WIN32
   if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == SOCKET_ERROR) {
     std::cerr << "bind failed" << std::endl;
@@ -53,14 +50,12 @@ void Listener::listenerFunction() {
   }
 #endif
 
-  std::cout << "... listening" << std::endl;
   if (listen(server_fd, 3) < 0) {
     perror("listen");
     exit(EXIT_FAILURE);
   }
 
   while (is_listening_) {
-    std::cout << "... accepting connection" << std::endl;
 
 #ifdef _WIN32
     if ((new_socket = accept(server_fd, (SOCKADDR*)&address, &addrlen)) == INVALID_SOCKET) {
@@ -106,47 +101,43 @@ void Listener::createConnection(int socket) {
 #else
     valread = read(socket, buffer.data(), buffer.size());
 #endif
-    std::cout << "Listener::createConnection, recieved " << valread << " bytes" << std::endl;
     if (valread > 0) {
       completeData.insert(completeData.end(), buffer.begin(), buffer.begin() + valread);
     }
   } while (valread == 1024);
 
-  int cdSize = static_cast<unsigned int>(completeData.size());
+#ifdef DEBUG
   std::cout << "capability data from incoming connection:" << std::endl;
   Util::hex_dump(completeData);
+#endif
 
   // for every slip packet we received (probably only 1 as this is an initial connection) 
   // which are pairs of int, c-string (ID, Name (0 terminated))
   if (!completeData.empty()) {
     std::vector<std::vector<uint8_t>> packets = SLIP::splitIntoPackets(completeData.data(), completeData.size());
-    std::cout << "packets size: " << packets.size() << ", completeData size: " << completeData.size() << std::endl;
 
     if (!packets.empty()) {
       // We have at least some data that might pass as a capability, let's create the Connection object, and use it to parse the data
       std::shared_ptr<Connection> conn = std::make_shared<TCPConnection>(socket);
       for (const auto& packet : packets) {
+
+#ifdef DEBUG
         std::cout << ".. packet:" << std::endl;
         Util::hex_dump(packet);
+#endif
+
         if (!packet.empty()) {
-          std::cout << ".. adding devices" << std::endl;
           // create devices from the data
           conn->addDevices(packet);
-          std::cout << ".. added devices" << std::endl;
         }
       }
       if (!conn->getDevices().empty()) {
-        std::cout << ".. found devices, setting connected, then adding to connections" << std::endl;
         // this connection is a keeper! it has some devices on it.
         conn->setIsConnected(true);
-        std::cout << ".. creating read channel" << std::endl;
         conn->createReadChannel();
-        std::cout << ".. read channel created" << std::endl;
         // create a closure, so the mutex is released as it goes out of scope
         {
-          std::cout << ".. getting lock" << std::endl;
           std::lock_guard<std::mutex> lock(mtx_);
-          std::cout << ".. got it, adding to connections_" << std::endl;
           connections_.push_back(conn);
         } // mtx_ unlocked here
       }
