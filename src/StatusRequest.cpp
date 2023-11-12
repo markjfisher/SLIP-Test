@@ -1,6 +1,8 @@
+#include <iostream>
+#include <stdexcept>
+
 #include "StatusRequest.h"
 #include "StatusResponse.h"
-#include <stdexcept>
 #include "SmartPortHandler.h"
 #include "Util.h"
 
@@ -18,7 +20,11 @@ std::vector<uint8_t> StatusRequest::serialize() const {
   data.push_back(this->get_sp_unit());
   data.push_back(this->get_status_code());
 
+#ifdef DEBUG
+  std::cout << "Serialised version of StatusRequest:" << std::endl;
   Util::hex_dump(data);
+#endif
+
   return data;
 }
 

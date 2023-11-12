@@ -29,7 +29,10 @@ void TCPConnection::send_data(const std::vector<uint8_t>& data) {
   }
 
   auto slip_data = SLIP::encode(data);
+#ifdef DEBUG
+  std::cout << "TCPConnection::send_data sending:" << std::endl;
   Util::hex_dump(slip_data);
+#endif
 
 #ifdef _WIN32
   send(socket_, reinterpret_cast<const char *>(slip_data.data()), slip_data.size(), 0);
