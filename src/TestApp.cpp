@@ -31,17 +31,23 @@ void TestApp::start_listener(std::string command) {
 
   listener_ = std::make_unique<Listener>(address, port);
   listener_->start();
-  std::cout << "Created listener to " << address << ":" << port << std::endl;
+  std::cout << "Created listener on " << address << ":" << port << std::endl;
 }
 
 void TestApp::check_status(std::string command) {
-  std::string unit_string = command.substr(7);
-  int unit = std::stoi(unit_string);
+  std::string device_id_string = command.substr(7);
+  int device_id = std::stoi(device_id_string);
 
-  Requestor requestor(listener_.get());
+  Requestor requestor;
 
-  StatusRequest status_request(10, static_cast<uint8_t>(unit), 0);
-  auto response = requestor.send_request(status_request);
+  StatusRequest status_request(10, static_cast<uint8_t>(device_id), 0);
+  auto connection = listener_->find_connection_with_device(device_id);
+  if (connection == nullptr) {
+    std::cout << "No device found that could service unit " << static_cast<unsigned int>(device_id) << std::endl;
+    return;
+  }
+
+  auto response = requestor.send_request(status_request, connection);
   StatusResponse* status_response = dynamic_cast<StatusResponse*>(response.get());
   if (status_response != nullptr) {
     std::cout << "Found valid status response:" << static_cast<unsigned int>(status_response->get_status()) << std::endl;
@@ -69,9 +75,6 @@ void TestApp::connect_to_server(std::string command) {
 
   int port;
   iss >> port;  // Read port number
-
-  std::string name;
-  iss >> name;  // Read connection "name"
 
   std::getline(iss, word, ' ');  // Skip space
 

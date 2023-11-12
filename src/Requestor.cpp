@@ -2,20 +2,13 @@
 #include "Requestor.h"
 #include "Listener.h"
 
-std::unique_ptr<Response> Requestor::send_request(Request& request) {
+std::unique_ptr<Response> Requestor::send_request(Request& request, Connection* connection) {
 
 #ifdef DEBUG
   std::cout << "Requestor::send_request, request: " << request << std::endl;
 #endif
 
   auto device_id = request.get_sp_unit();
-  // get a connection that will service our request
-  auto connection = listener_->find_connection_with_device(device_id);
-
-  if (connection == nullptr) {
-    std::cout << "No device found that could service unit " << static_cast<unsigned int>(device_id) << std::endl;
-    return nullptr;
-  }
 
   // The request's device_id given needs to map back to the unit_id of the target
   auto unit_id = connection->get_unit_id_by_device_index(device_id);
