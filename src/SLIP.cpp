@@ -88,7 +88,7 @@ std::vector<uint8_t> SLIP::decode(const std::vector<uint8_t>& data) {
 
 // This breaks up a vector of data into a list of decoded vectors of serialized objects.
 // The returned data is already "SLIP::decode"d
-std::vector<std::vector<uint8_t>> SLIP::splitIntoPackets(const uint8_t* data, size_t bytes_read) {
+std::vector<std::vector<uint8_t>> SLIP::split_into_packets(const uint8_t* data, size_t bytes_read) {
   // The list of decoded SLIP packets
   std::vector<std::vector<uint8_t>> decoded_packets;
 

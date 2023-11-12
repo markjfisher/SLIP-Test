@@ -21,7 +21,7 @@ public:
   uint8_t get_sp_unit() const { return sp_unit_; }
   void set_sp_unit(uint8_t sp_unit) { sp_unit_ = sp_unit; }
 
-  virtual std::string toString() const {
+  virtual std::string to_string() const {
     std::stringstream ss;
     ss << "Request: {";
     ss << "seq_number = " << static_cast<unsigned int>(get_request_sequence_number());
@@ -32,7 +32,7 @@ public:
   }
 
   friend std::ostream& operator<<(std::ostream& os, const Request& request) {
-    os << request.toString();
+    os << request.to_string();
     return os;
   }
 

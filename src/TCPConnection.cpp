@@ -17,14 +17,14 @@
 #include "SLIP.h"
 #include "Util.h"
 
-void TCPConnection::sendData(const std::vector<uint8_t>& data) {
+void TCPConnection::send_data(const std::vector<uint8_t>& data) {
 #ifdef DEBUG
-  std::cout << "TCPConnection::sendData, sending data:" << std::endl;
+  std::cout << "TCPConnection::send_data, sending data:" << std::endl;
   Util::hex_dump(data);
 #endif
 
   if (data.empty()) {
-    std::cerr << "TCPConnection::sendData No data was given to send" << std::endl;
+    std::cerr << "TCPConnection::send_data No data was given to send" << std::endl;
     return;
   }
 
@@ -39,25 +39,25 @@ void TCPConnection::sendData(const std::vector<uint8_t>& data) {
 
 }
 
-void TCPConnection::createReadChannel() {
+void TCPConnection::create_read_channel() {
   // Start a new thread to listen for incoming data
-  std::thread readingThread([self = shared_from_this()]() {
-    std::vector<uint8_t> completeData;
+  std::thread reading_thread([self = shared_from_this()]() {
+    std::vector<uint8_t> complete_data;
     std::vector<uint8_t> buffer(1024);
 
     // Set a timeout on the socket
     struct timeval timeout;
     timeout.tv_sec = 10;  // 10 second
     timeout.tv_usec = 0;
-    setsockopt(self->getSocket(), SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+    setsockopt(self->get_socket(), SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 
-    while (self->isConnected()) {
+    while (self->is_connected()) {
       int valread = 0;
       do {
 #ifdef _WIN32
-        valread = recv(self->getSocket(), reinterpret_cast<char*>(buffer.data()), buffer.size(), 0);
+        valread = recv(self->get_socket(), reinterpret_cast<char*>(buffer.data()), buffer.size(), 0);
 #else
-        valread = read(self->getSocket(), buffer.data(), buffer.size());
+        valread = read(self->get_socket(), buffer.data(), buffer.size());
 #endif
         int errsv = errno;
         if (valread < 0) {
@@ -67,19 +67,19 @@ void TCPConnection::createReadChannel() {
           }
           // otherwise it was a genuine error.
           std::cerr << "Error in read thread for connection, errno: " << errsv << " = " << strerror(errsv) << std::endl;
-          self->setIsConnected(false);
+          self->set_is_connected(false);
         }
         if (valread == 0) {
           // disconnected, close connection, should remove it too: TODO
-          self->setIsConnected(false);
+          self->set_is_connected(false);
         }
         if (valread > 0) {
-          completeData.insert(completeData.end(), buffer.begin(), buffer.begin() + valread);
+          complete_data.insert(complete_data.end(), buffer.begin(), buffer.begin() + valread);
         }
       } while (valread == 1024);
 
-      if (!completeData.empty()) {
-        std::vector<std::vector<uint8_t>> decoded_packets = SLIP::splitIntoPackets(completeData.data(), completeData.size());
+      if (!complete_data.empty()) {
+        std::vector<std::vector<uint8_t>> decoded_packets = SLIP::split_into_packets(complete_data.data(), complete_data.size());
         if (!decoded_packets.empty()) {
           for (const auto& packet : decoded_packets) {
             if (!packet.empty()) {
@@ -94,16 +94,16 @@ void TCPConnection::createReadChannel() {
             }
           }
         }
-        completeData.clear();
+        complete_data.clear();
       }
     }
   });
-  readingThread.detach();
+  reading_thread.detach();
 }
 
-  std::string TCPConnection::toString() {
+  std::string TCPConnection::to_string() {
     std::stringstream ss;
-    ss << Connection::toString();  // Include the output of the base class
+    ss << Connection::to_string();  // Include the output of the base class
     ss << ", TCPConnection specific info: {";
     ss << "socket = " << socket_;
     ss << "}";

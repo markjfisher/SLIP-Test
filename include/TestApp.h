@@ -10,18 +10,14 @@
 class TestApp {
 private:
   std::unique_ptr<Listener> listener_;
-  // std::vector<int> sockets_;
   std::vector<std::unique_ptr<Responder>> responders_;
 
-  void closeConnection(int sock);
+  void close_connection(int sock);
 
 public:
-  void startListener(std::string command);
-  void checkStatus(std::string command);
-  void connectToServer(std::string command);
-  // void listDevices();
-  // void listConnections();
+  void start_listener(std::string command);
+  void check_status(std::string command);
+  void connect_to_server(std::string command);
   void info();
   void shutdown();
-
 };

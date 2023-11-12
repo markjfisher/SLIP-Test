@@ -14,12 +14,12 @@ class Responder {
 
 public:
   Responder(std::unique_ptr<SmartPortHandler> handler, std::shared_ptr<Connection> connection)
-    : smartPortHandler_(std::move(handler)), connection_(connection) {}
+    : smart_port_handler_(std::move(handler)), connection_(connection) {}
 
   void processRequestData(const std::vector<uint8_t>& packet);
-  void waitForRequests();
+  void wait_for_requests();
 
 private:
-  std::unique_ptr<SmartPortHandler> smartPortHandler_;
+  std::unique_ptr<SmartPortHandler> smart_port_handler_;
   std::shared_ptr<Connection> connection_;
 };

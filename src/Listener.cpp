@@ -6,23 +6,21 @@
 #include "SLIP.h"
 #include "Util.h"
 
-std::atomic<bool> stopListenerThread = false;
-
 Listener::~Listener() {
   stop();
 }
 
-std::thread Listener::createListenerThread() {
-  return std::thread(&Listener::listenerFunction, this);
+std::thread Listener::create_listener_thread() {
+  return std::thread(&Listener::listener_function, this);
 }
 
-void Listener::listenerFunction() {
+void Listener::listener_function() {
   int server_fd, new_socket;
   struct sockaddr_in address;
   int addrlen = sizeof(address);
 #ifdef _WIN32
-  WSADATA wsaData;
-  WSAStartup(MAKEWORD(2, 2), &wsaData);
+  WSADATA wsa_data;
+  WSAStartup(MAKEWORD(2, 2), &wsa_data);
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
     std::cerr << "socket creation failed" << std::endl;
     exit(EXIT_FAILURE);
@@ -71,7 +69,7 @@ void Listener::listenerFunction() {
 
     // do it in a thread so we can respond to more requests as soon as possible
     std::thread([this, new_socket]() {
-      createConnection(new_socket);
+      create_connection(new_socket);
     }).detach();
 
   }
@@ -90,8 +88,8 @@ void Listener::listenerFunction() {
 // Creates a Connecton object, which is how a SP will register itself with our listener.
 // When it connects, it tells us all the available unit IDs and names available to service requests.
 // That connection will then be used to send requests to, and get responses back from.
-void Listener::createConnection(int socket) {
-  std::vector<uint8_t> completeData;
+void Listener::create_connection(int socket) {
+  std::vector<uint8_t> complete_data;
   std::vector<uint8_t> buffer(1024);
 
   int valread = 0;
@@ -102,19 +100,19 @@ void Listener::createConnection(int socket) {
     valread = read(socket, buffer.data(), buffer.size());
 #endif
     if (valread > 0) {
-      completeData.insert(completeData.end(), buffer.begin(), buffer.begin() + valread);
+      complete_data.insert(complete_data.end(), buffer.begin(), buffer.begin() + valread);
     }
   } while (valread == 1024);
 
 #ifdef DEBUG
   std::cout << "capability data from incoming connection:" << std::endl;
-  Util::hex_dump(completeData);
+  Util::hex_dump(complete_data);
 #endif
 
   // for every slip packet we received (probably only 1 as this is an initial connection) 
   // which are pairs of int, c-string (ID, Name (0 terminated))
-  if (!completeData.empty()) {
-    std::vector<std::vector<uint8_t>> packets = SLIP::splitIntoPackets(completeData.data(), completeData.size());
+  if (!complete_data.empty()) {
+    std::vector<std::vector<uint8_t>> packets = SLIP::split_into_packets(complete_data.data(), complete_data.size());
 
     if (!packets.empty()) {
       // We have at least some data that might pass as a capability, let's create the Connection object, and use it to parse the data
@@ -128,13 +126,13 @@ void Listener::createConnection(int socket) {
 
         if (!packet.empty()) {
           // create devices from the data
-          conn->addDevices(packet);
+          conn->add_devices(packet);
         }
       }
-      if (!conn->getDevices().empty()) {
+      if (!conn->get_devices().empty()) {
         // this connection is a keeper! it has some devices on it.
-        conn->setIsConnected(true);
-        conn->createReadChannel();
+        conn->set_is_connected(true);
+        conn->create_read_channel();
         // create a closure, so the mutex is released as it goes out of scope
         {
           std::lock_guard<std::mutex> lock(mtx_);
@@ -147,27 +145,27 @@ void Listener::createConnection(int socket) {
 
 void Listener::start() {
   is_listening_ = true;
-  std::thread(&Listener::listenerFunction, this).detach();
+  std::thread(&Listener::listener_function, this).detach();
 }
 
 void Listener::stop() {
   is_listening_ = false;
 }
 
-Connection* Listener::findConnectionWithDevice(int deviceId) {
+Connection* Listener::find_connection_with_device(int device_id) {
   for (const auto& connection : connections_) {
-    if (connection->findDevice(deviceId) != nullptr) {
+    if (connection->find_device(device_id) != nullptr) {
       return connection.get();
     }
   }
   return nullptr;
 }
 
-std::string Listener::toString() {
+std::string Listener::to_string() {
   std::stringstream ss;
   ss << "Listener: ip_address = " << ip_address_ << ", port = " << port_ << ", is_listening = " << (is_listening_ ? "true" : "false") << ", connections = [";
   for (const auto& connection : connections_) {
-    ss << connection->toString() << ", ";
+    ss << connection->to_string() << ", ";
   }
   std::string str = ss.str();
   if (!connections_.empty()) {

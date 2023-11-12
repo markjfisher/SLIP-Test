@@ -30,12 +30,12 @@ public:
   void start();
   void stop();
 
-  std::thread createListenerThread();
-  bool getIsListening() { return is_listening_; }
+  std::thread create_listener_thread();
+  bool get_is_listening() { return is_listening_; }
 
-  Connection* findConnectionWithDevice(int deviceId);
+  Connection* find_connection_with_device(int device_id);
 
-  std::string toString();
+  std::string to_string();
 
 private:
   std::string ip_address_;
@@ -44,6 +44,6 @@ private:
   std::vector<std::shared_ptr<Connection>> connections_;
 
   bool is_listening_;
-  void createConnection(int socket);
-  void listenerFunction();
+  void create_connection(int socket);
+  void listener_function();
 };

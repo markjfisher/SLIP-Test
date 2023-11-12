@@ -31,23 +31,19 @@ exit              # exit application
 
     // add 2 to string length for the next arg
     if (command.find("start") == 0) {
-      app.startListener(command);
+      app.start_listener(command);
     }
 
     if (command.find("connect") == 0) {
-      app.connectToServer(command);
+      app.connect_to_server(command);
     }
 
     if (command.find("status") == 0) {
-      app.checkStatus(command);
+      app.check_status(command);
     }
 
     if (command.find("info") == 0) {
       app.info();
-    }
-
-    if (command.find("connections") == 0) {
-      // app.listConnections();
     }
 
     std::cout << "> ";

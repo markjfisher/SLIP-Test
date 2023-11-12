@@ -2,28 +2,33 @@
 #include "Requestor.h"
 #include "Listener.h"
 
-std::unique_ptr<Response> Requestor::sendRequest(const Request& request) {
+std::unique_ptr<Response> Requestor::send_request(Request& request) {
 
 #ifdef DEBUG
-  std::cout << "Requestor::sendRequest, request: " << request << std::endl;
+  std::cout << "Requestor::send_request, request: " << request << std::endl;
 #endif
 
+  auto device_id = request.get_sp_unit();
   // get a connection that will service our request
-  auto connection = listener_->findConnectionWithDevice(request.get_sp_unit());
+  auto connection = listener_->find_connection_with_device(device_id);
 
   if (connection == nullptr) {
-    std::cout << "No device found that could service unit " << static_cast<unsigned int>(request.get_sp_unit()) << std::endl;
+    std::cout << "No device found that could service unit " << static_cast<unsigned int>(device_id) << std::endl;
     return nullptr;
   }
 
+  // The request's device_id given needs to map back to the unit_id of the target
+  auto unit_id = connection->get_unit_id_by_device_index(device_id);
+  request.set_sp_unit(unit_id);
+
   // Send the serialized request
-  connection->sendData(request.serialize());
+  connection->send_data(request.serialize());
 
   std::vector<uint8_t> response_data;
   try {
-    response_data = connection->waitForResponse(request.get_request_sequence_number(), std::chrono::seconds(20));
+    response_data = connection->wait_for_response(request.get_request_sequence_number(), std::chrono::seconds(20));
   } catch (const std::runtime_error& e) {
-    std::cerr << "Requestor::sendRequest did not get response, error = " << e.what() << std::endl;
+    std::cerr << "Requestor::send_request did not get response, error = " << e.what() << std::endl;
     return nullptr;
   }
 

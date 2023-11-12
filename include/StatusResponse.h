@@ -10,7 +10,6 @@ private:
 
 public:
   virtual std::vector<uint8_t> serialize() const override;
-  // virtual std::unique_ptr<Request> deserialize(const std::vector<uint8_t>& data) override;
 
   // status_values
   const std::vector<uint8_t>& get_status_values() const { return status_values_; }

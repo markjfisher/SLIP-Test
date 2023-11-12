@@ -15,5 +15,5 @@ public:
   // these encode and decode exactly one SLIP frame, and expect it to be sane.
   static std::vector<uint8_t> encode(const std::vector<uint8_t>& data);
   static std::vector<uint8_t> decode(const std::vector<uint8_t>& data);
-  static std::vector<std::vector<uint8_t>> splitIntoPackets(const uint8_t* data, size_t bytes_read);
+  static std::vector<std::vector<uint8_t>> split_into_packets(const uint8_t* data, size_t bytes_read);
 };

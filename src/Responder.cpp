@@ -20,12 +20,12 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
 
   case SP_STATUS:
     request = std::make_unique<StatusRequest>(packet[0], packet[2], packet[3]);
-    response = smartPortHandler_->status(static_cast<StatusRequest*>(request.get()));
+    response = smart_port_handler_->status(static_cast<StatusRequest*>(request.get()));
     break;
 
   // case SP_READ_BLOCK:
   //   request = std::make_unique<ReadBlockRequest>(packet[0], packet[2], packet[3]);
-  //   response = smartPortHandler_->readBlock(static_cast<ReadBlockRequest*>(request.get()));
+  //   response = smart_port_handler_->readBlock(static_cast<ReadBlockRequest*>(request.get()));
   //   break;
 
   // TODO: ALL OTHER COMMANDS HERE
@@ -52,13 +52,13 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
   }
 
   auto response_data = response->serialize();
-  connection_->sendData(response_data);
+  connection_->send_data(response_data);
 }
 
-void Responder::waitForRequests() {
+void Responder::wait_for_requests() {
   while (true) {
     // Keep listening for incoming requests
-    auto request_data = connection_->waitForRequest();
+    auto request_data = connection_->wait_for_request();
     processRequestData(request_data);
   }
 }

@@ -18,7 +18,7 @@
 #include "StatusResponse.h"
 #include "FakeSmartPortHandler.h"
 
-void TestApp::startListener(std::string command) {
+void TestApp::start_listener(std::string command) {
   std::istringstream iss(command);
   std::string word;
   iss >> word;  // Skip "start"
@@ -34,23 +34,23 @@ void TestApp::startListener(std::string command) {
   std::cout << "Created listener to " << address << ":" << port << std::endl;
 }
 
-void TestApp::checkStatus(std::string command) {
+void TestApp::check_status(std::string command) {
   std::string unit_string = command.substr(7);
   int unit = std::stoi(unit_string);
 
   Requestor requestor(listener_.get());
 
-  StatusRequest statusRequest(10, static_cast<uint8_t>(unit), 0);
-  auto response = requestor.sendRequest(statusRequest);
-  StatusResponse* statusResponse = dynamic_cast<StatusResponse*>(response.get());
-  if (statusResponse != nullptr) {
-    std::cout << "Found valid status response:" << static_cast<unsigned int>(statusResponse->get_status()) << std::endl;
+  StatusRequest status_request(10, static_cast<uint8_t>(unit), 0);
+  auto response = requestor.send_request(status_request);
+  StatusResponse* status_response = dynamic_cast<StatusResponse*>(response.get());
+  if (status_response != nullptr) {
+    std::cout << "Found valid status response:" << static_cast<unsigned int>(status_response->get_status()) << std::endl;
   } else {
     std::cout << "error casting to StatusResponse (probably timed out sending)" << std::endl;
   }
 }
 
-void TestApp::closeConnection(int sock) {
+void TestApp::close_connection(int sock) {
 #ifdef _WIN32
     closesocket(sock);
     WSACleanup();
@@ -59,7 +59,7 @@ void TestApp::closeConnection(int sock) {
 #endif
 }
 
-void TestApp::connectToServer(std::string command) {
+void TestApp::connect_to_server(std::string command) {
   std::istringstream iss(command);
   std::string word;
   iss >> word;  // Skip "connect"
@@ -94,8 +94,8 @@ void TestApp::connectToServer(std::string command) {
   std::cout << "Attempting connection to " << address << ":" << port << std::endl;
   int sock;
 #ifdef _WIN32
-  WSADATA wsaData;
-  WSAStartup(MAKEWORD(2, 2), &wsaData);
+  WSADATA wsa_data;
+  WSAStartup(MAKEWORD(2, 2), &wsa_data);
   if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
 #else
   if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -105,23 +105,23 @@ void TestApp::connectToServer(std::string command) {
   }
 
   // Set up the server address, this is only for testing, hence using 127.0.0.1
-  sockaddr_in serverAddr{};
-  serverAddr.sin_family = AF_INET;
-  serverAddr.sin_port = htons(port);
+  sockaddr_in server_addr{};
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons(port);
 #ifdef _WIN32
-  if (InetPton(AF_INET, TEXT(address.c_str()), &serverAddr.sin_addr) <= 0) {
+  if (InetPton(AF_INET, TEXT(address.c_str()), &server_addr.sin_addr) <= 0) {
 #else
-  if (inet_pton(AF_INET, address.c_str(), &serverAddr.sin_addr) <= 0) {
+  if (inet_pton(AF_INET, address.c_str(), &server_addr.sin_addr) <= 0) {
 #endif
     std::cerr << "Failed to set server address: " << strerror(errno) << std::endl;
-    closeConnection(sock);
+    close_connection(sock);
     return;
   }
 
   // Connect to the server
-  if (connect(sock, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr)) < 0) {
+  if (connect(sock, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) < 0) {
     std::cerr << "Failed to connect to server: " << strerror(errno) << std::endl;
-    closeConnection(sock);
+    close_connection(sock);
     return;
   }
   std::cout << "Connected to target, sending capability data" << std::endl;
@@ -136,13 +136,13 @@ void TestApp::connectToServer(std::string command) {
 
   if (res < 0) {
     std::cerr << "Failed to send data: " << strerror(errno) << std::endl;
-    closeConnection(sock);
+    close_connection(sock);
     return;
   }
 
   std::shared_ptr<Connection> conn = std::make_shared<TCPConnection>(sock);
-  conn->setIsConnected(true);
-  conn->createReadChannel();
+  conn->set_is_connected(true);
+  conn->create_read_channel();
 
   // Now create a smartport handler and responder for servicing requests.
   std::unique_ptr<SmartPortHandler> handler = std::make_unique<FakeSmartPortHandler>();
@@ -150,7 +150,7 @@ void TestApp::connectToServer(std::string command) {
   // Create a Responder with the handler and the connection
   std::unique_ptr<Responder> responder = std::make_unique<Responder>(std::move(handler), conn);
 
-  std::thread thread(&Responder::waitForRequests, responder.get());
+  std::thread thread(&Responder::wait_for_requests, responder.get());
   thread.detach();
 
   responders_.push_back(std::move(responder));
@@ -161,7 +161,7 @@ void TestApp::shutdown() {
 
 void TestApp::info() {
   if (listener_) {
-    std::cout << listener_->toString() << std::endl;
+    std::cout << listener_->to_string() << std::endl;
   } else {
     std::cout << "No listener" << std::endl;
   }

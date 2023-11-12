@@ -11,7 +11,8 @@ public:
   Requestor(Listener* listener) : listener_(listener) {}
 
   // The Request's deserialize function will always return a Response, e.g. StatusRequest -> StatusResponse
-  std::unique_ptr<Response> sendRequest(const Request& request);
+  // The request will be mutated 
+  std::unique_ptr<Response> send_request(Request& request);
 
 private:
   Listener* listener_;

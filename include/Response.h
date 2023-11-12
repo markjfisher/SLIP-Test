@@ -9,7 +9,6 @@
 class Response : public Packet {
 public:
   virtual std::vector<uint8_t> serialize() const override = 0;
-  // virtual std::unique_ptr<Request> deserialize(const std::vector<uint8_t>& data) = 0;
 
   uint8_t get_status() const { return status_; }
   void set_status(uint8_t status) { status_ = status; }
