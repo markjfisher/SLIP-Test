@@ -12,7 +12,15 @@ cmake ..
 make
 ```
 
-This will generate `SLIPTerminal.exe`
+In a MSYS2 CLANG64 or UCRT64 shell
+
+```shell
+cd build
+cmake ..
+ninja
+```
+
+All of these will generate `SLIPTerminal.exe`
 
 ## Usage
 
