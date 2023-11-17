@@ -18,10 +18,10 @@
 #include "Util.h"
 
 void TCPConnection::send_data(const std::vector<uint8_t>& data) {
-#ifdef DEBUG
+// #ifdef DEBUG
   std::cout << "TCPConnection::send_data, sending data:" << std::endl;
   Util::hex_dump(data);
-#endif
+// #endif
 
   if (data.empty()) {
     std::cerr << "TCPConnection::send_data No data was given to send" << std::endl;
@@ -29,10 +29,10 @@ void TCPConnection::send_data(const std::vector<uint8_t>& data) {
   }
 
   auto slip_data = SLIP::encode(data);
-#ifdef DEBUG
+// #ifdef DEBUG
   std::cout << "TCPConnection::send_data sending:" << std::endl;
   Util::hex_dump(slip_data);
-#endif
+// #endif
 
 #ifdef _WIN32
   send(socket_, reinterpret_cast<const char *>(slip_data.data()), slip_data.size(), 0);

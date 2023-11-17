@@ -39,12 +39,23 @@ public:
 
   uint8_t get_unit_id_by_device_index(int device_index) const;
 
+  void set_capability_map(const std::map<int, std::string>& m) { capability_map_ = m; }
+  std::string get_capability_name(int id) const {
+    auto it = capability_map_.find(id);
+    if (it != capability_map_.end()) {
+      return it->second;
+    } else {
+      return "";
+    }
+  }
+
   virtual std::string to_string();
 
 private:
   bool is_connected_;
   std::vector<Device> devices_;
   static int device_index_;
+  std::map<int, std::string> capability_map_;
 
 protected:
   std::map<uint8_t, std::vector<uint8_t>> responses_;

@@ -76,23 +76,8 @@ void TestApp::connect_to_server(std::string command) {
   int port;
   iss >> port;  // Read port number
 
-  std::getline(iss, word, ' ');  // Skip space
-
-  std::vector<uint8_t> data;
-  while (std::getline(iss, word, ',')) {
-    // Convert ID to uint8_t and add to data
-    int id = std::stoi(word);
-    data.push_back(static_cast<uint8_t>(id));
-
-    // Get name and add to data
-    std::getline(iss, word, ',');
-    for (char c : word) {
-      data.push_back(static_cast<uint8_t>(c));
-    }
-    data.push_back('\0');  // Add null terminator
-  }
-
-  // Now data contains the parsed data
+  std::getline(iss, word);
+  std::cout << "word: >" << word << "<" << std::endl;
 
   std::cout << "Attempting connection to " << address << ":" << port << std::endl;
   int sock;
@@ -107,7 +92,7 @@ void TestApp::connect_to_server(std::string command) {
     return;
   }
 
-  // Set up the server address, this is only for testing, hence using 127.0.0.1
+  // Set up the server address
   sockaddr_in server_addr{};
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(port);
@@ -127,28 +112,13 @@ void TestApp::connect_to_server(std::string command) {
     close_connection(sock);
     return;
   }
-  std::cout << "Connected to target, sending capability data" << std::endl;
-
-  // Send the data
-  auto slip_data = SLIP::encode(data);
-#ifdef _WIN32
-  auto res = send(sock, reinterpret_cast<const char *>(slip_data.data()), slip_data.size(), 0);
-#else
-  auto res = write(sock, slip_data.data(), slip_data.size());
-#endif
-
-  if (res < 0) {
-    std::cerr << "Failed to send data: " << strerror(errno) << std::endl;
-    close_connection(sock);
-    return;
-  }
-
+  std::cout << "Connected to target" << std::endl;
   std::shared_ptr<Connection> conn = std::make_shared<TCPConnection>(sock);
   conn->set_is_connected(true);
   conn->create_read_channel();
 
   // Now create a smartport handler and responder for servicing requests.
-  std::unique_ptr<SmartPortHandler> handler = std::make_unique<FakeSmartPortHandler>();
+  std::unique_ptr<SmartPortHandler> handler = std::make_unique<FakeSmartPortHandler>(word);
 
   // Create a Responder with the handler and the connection
   std::unique_ptr<Responder> responder = std::make_unique<Responder>(std::move(handler), conn);

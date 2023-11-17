@@ -8,7 +8,6 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
   // Convert each packet's "command" into the appropriate Request object, let the smart port handler process it
 
   std::unique_ptr<Response> response;
-  std::unique_ptr<Request> request;
 
   uint8_t command = packet[1];
 
@@ -18,21 +17,23 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
 
   switch(command) {
 
-  case SP_STATUS:
-    request = std::make_unique<StatusRequest>(packet[0], packet[2], packet[3]);
+  case SP_STATUS: {
+    std::unique_ptr<StatusRequest> request = std::make_unique<StatusRequest>(packet[0], packet[2], packet[3]);
     response = smart_port_handler_->status(static_cast<StatusRequest*>(request.get()));
     break;
+  }
 
-  // case SP_READ_BLOCK:
-  //   request = std::make_unique<ReadBlockRequest>(packet[0], packet[2], packet[3]);
-  //   response = smart_port_handler_->readBlock(static_cast<ReadBlockRequest*>(request.get()));
-  //   break;
+  case SP_CONTROL: {
+    std::vector<uint8_t> payload(packet.begin() + 3, packet.end());
+    std::unique_ptr<ControlRequest> request = std::make_unique<ControlRequest>(packet[0], packet[2], packet[3], payload);
+    response = smart_port_handler_->control(static_cast<ControlRequest*>(request.get()));
+    break;
+  }
 
   // TODO: ALL OTHER COMMANDS HERE
   case SP_READ_BLOCK:
   case SP_WRITE_BLOCK:
   case SP_FORMAT:
-  case SP_CONTROL:
   case SP_INIT:
   case SP_OPEN:
   case SP_CLOSE:
@@ -49,6 +50,11 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
     break;
   }
 
+  }
+
+  if (response == nullptr) {
+    std::cout << "Response was null. Not returning anything" << std::endl;
+    return;
   }
 
   auto response_data = response->serialize();
