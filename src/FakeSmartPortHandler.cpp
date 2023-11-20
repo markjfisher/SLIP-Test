@@ -17,7 +17,7 @@ void FakeSmartPortHandler::parse_capabilities(const std::string& input) {
 }
 
 std::unique_ptr<StatusResponse> FakeSmartPortHandler::status(StatusRequest* request) {
-  std::cout << "FakeSmartPortHandler::status called with request: " << request->to_string() << std::endl;
+  std::cout << "FakeSmartPortHandler::status called with request: " << std::endl;
 
   if (request->get_sp_unit() != 0x00 && request->get_status_code() == 0x03) {
     // DIB request, get the capability for this unit number
@@ -41,10 +41,8 @@ std::unique_ptr<StatusResponse> FakeSmartPortHandler::status(StatusRequest* requ
       // Followed by Firmware Version
       data.push_back(0x00);
       data.push_back(0x01);
-      auto response = std::make_unique<StatusResponse>();
-      response->set_request_sequence_number(request->get_request_sequence_number());
-      response->set_status(0);
-      response->set_status_values(data);
+      auto response = std::make_unique<StatusResponse>(request->get_request_sequence_number(), 0);
+      response->set_data(data);
       std::cout << "created DIB response:" << std::endl;
       Util::hex_dump(response->serialize());
       return response;
@@ -60,24 +58,20 @@ std::unique_ptr<StatusResponse> FakeSmartPortHandler::status(StatusRequest* requ
 
   if (request->get_sp_unit() == 0 && request->get_status_code() == 0) {
     // DEVICE Count
-    auto response = std::make_unique<StatusResponse>();
-    response->set_request_sequence_number(request->get_request_sequence_number());
-    response->set_status(0);
+    auto response = std::make_unique<StatusResponse>(request->get_request_sequence_number(), 0);
     std::cout << "sending response length: " << capability_map_.size() << std::endl;
-    response->add_status_value(capability_map_.size());
+    response->add_data(capability_map_.size());
     return response;
   }
 
 
   // TODO: change the upper range to be relevant to number of devices currently attached.
   if (request->get_sp_unit() <= 2) {
-    auto response = std::make_unique<StatusResponse>();
-    response->set_request_sequence_number(request->get_request_sequence_number());
-    response->set_status(0);
-    response->add_status_value(1 << 6 | 1 << 5 | 1 << 4); // READ/WRITE ALLOWED, ONLINE
-    response->add_status_value(0x00); // block size 1
-    response->add_status_value(0x00); // block size 2
-    response->add_status_value(0x00); // block size 3
+    auto response = std::make_unique<StatusResponse>(request->get_request_sequence_number(), 0);
+    response->add_data(1 << 6 | 1 << 5 | 1 << 4); // READ/WRITE ALLOWED, ONLINE
+    response->add_data(0x00); // block size 1
+    response->add_data(0x00); // block size 2
+    response->add_data(0x00); // block size 3
     return response;
   }
   return nullptr;
@@ -85,9 +79,7 @@ std::unique_ptr<StatusResponse> FakeSmartPortHandler::status(StatusRequest* requ
 
 std::unique_ptr<ControlResponse> FakeSmartPortHandler::control(ControlRequest* request) {
   // just print out the request, and return a successful response (status = 0)
-  std::cout << "FakeSmartPortHandler::control called with request: " << request->to_string() << std::endl;
-  auto response = std::make_unique<ControlResponse>();
-  response->set_request_sequence_number(request->get_request_sequence_number());
-  response->set_status(0);
+  std::cout << "FakeSmartPortHandler::control called with request: " << std::endl;
+  auto response = std::make_unique<ControlResponse>(request->get_request_sequence_number(), 0);
   return response;
 }

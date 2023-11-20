@@ -4,16 +4,17 @@
 #include <stdint.h>
 #include "Response.h"
 
-class StatusResponse : public Response {
-private:
-  std::vector<uint8_t> status_values_;
-
+class StatusResponse : public Response
+{
 public:
-  virtual std::vector<uint8_t> serialize() const override;
+	explicit StatusResponse(uint8_t request_sequence_number, uint8_t status);
+	std::vector<uint8_t> serialize() const override;
 
-  // status_values
-  const std::vector<uint8_t>& get_status_values() const { return status_values_; }
-  void set_status_values(const std::vector<uint8_t>& status_values) { status_values_ = status_values; }
-  void add_status_value(uint8_t status_value) { status_values_.push_back(status_value); }
+	const std::vector<uint8_t>& get_data() const;
+	void add_data(uint8_t d);
+  void set_data(const std::vector<uint8_t>& data);
+
+private:
+	std::vector<uint8_t> data_;
 
 };

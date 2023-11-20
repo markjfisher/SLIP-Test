@@ -4,6 +4,29 @@
 #include <memory>
 #include "Responder.h"
 
+#include "CloseRequest.h"
+#include "CloseResponse.h"
+#include "ControlRequest.h"
+#include "ControlResponse.h"
+#include "FormatRequest.h"
+#include "FormatResponse.h"
+#include "InitRequest.h"
+#include "InitResponse.h"
+#include "OpenRequest.h"
+#include "OpenResponse.h"
+#include "ReadBlockRequest.h"
+#include "ReadBlockResponse.h"
+#include "ReadRequest.h"
+#include "ReadResponse.h"
+#include "ResetRequest.h"
+#include "ResetResponse.h"
+#include "StatusRequest.h"
+#include "StatusResponse.h"
+#include "WriteBlockRequest.h"
+#include "WriteBlockResponse.h"
+#include "WriteRequest.h"
+#include "WriteResponse.h"
+
 void Responder::processRequestData(const std::vector<uint8_t>& packet) {
   // Convert each packet's "command" into the appropriate Request object, let the smart port handler process it
 
@@ -30,8 +53,10 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
     break;
   }
 
-  // TODO: ALL OTHER COMMANDS HERE
-  case SP_READ_BLOCK:
+  case SP_READ_BLOCK: {
+    // std::unique_ptr<ReadBlockRequest> request = std::make_unique<ReadBlockRequest>(packet[0], packet[2], packet[3]);
+    break;
+  }
   case SP_WRITE_BLOCK:
   case SP_FORMAT:
   case SP_INIT:

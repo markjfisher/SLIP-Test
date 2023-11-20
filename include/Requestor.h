@@ -2,18 +2,18 @@
 
 #include <memory>
 #include "Connection.h"
-#include "Listener.h"
 #include "Request.h"
 #include "Response.h"
 
-class Requestor {
+class Requestor
+{
 public:
-  Requestor() {}
+	Requestor();
 
-  // The Request's deserialize function will always return a Response, e.g. StatusRequest -> StatusResponse
-  // The request will be mutated 
-  std::unique_ptr<Response> send_request(Request& request, Connection* connection);
+	// The Request's deserialize function will always return a Response, e.g. StatusRequest -> StatusResponse
+	static std::unique_ptr<Response> send_request(const Request& request, Connection* connection);
+	static uint8_t next_request_number();
 
 private:
-  Listener* listener_;
+	static uint8_t request_number_;
 };

@@ -1,29 +1,25 @@
-#include <stddef.h>
 #include "StatusResponse.h"
 #include "StatusRequest.h"
-#include <stdexcept>
 
-std::vector<uint8_t> StatusResponse::serialize() const {
-  std::vector<uint8_t> data;
-  data.push_back(this->get_request_sequence_number());
-  data.push_back(this->get_status());
+StatusResponse::StatusResponse(const uint8_t request_sequence_number, const uint8_t status) : Response(request_sequence_number, status) {}
 
-  for (uint8_t status_value : get_status_values()) {
-    data.push_back(status_value);
-  }
-  return data;
+const std::vector<uint8_t>& StatusResponse::get_data() const { return data_; }
+
+void StatusResponse::add_data(const uint8_t d) { data_.push_back(d); }
+
+void StatusResponse::set_data(const std::vector<uint8_t>& data) {
+	data_ = data;
 }
 
-// std::unique_ptr<Request> StatusResponse::deserialize(const std::vector<uint8_t>& data)  {
-//   if (data.size() < 4) {
-//     throw std::runtime_error("Not enough data to deserialize StatusResponse");
-//   }
+std::vector<uint8_t> StatusResponse::serialize() const
+{
+	std::vector<uint8_t> data;
+	data.push_back(this->get_request_sequence_number());
+	data.push_back(this->get_status());
 
-//   std::unique_ptr<StatusRequest> request = std::make_unique<StatusRequest>();
-//   request->set_request_sequence_number(data[0]);
-//   request->set_command_number(data[1]);
-//   request->set_sp_unit(data[2]);
-//   request->set_status_code(data[3]);
-
-//   return request;
-// }
+	for (uint8_t b : get_data())
+	{
+		data.push_back(b);
+	}
+	return data;
+}
