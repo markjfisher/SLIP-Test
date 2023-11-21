@@ -34,8 +34,7 @@ void TestApp::start_listener(std::string command) {
   std::cout << "Created listener on " << address << ":" << port << std::endl;
 }
 
-void TestApp::check_status(std::string command) {
-  std::string device_id_string = command.substr(7);
+void TestApp::status(std::string device_id_string) {
   int device_id = std::stoi(device_id_string);
 
   Requestor requestor;

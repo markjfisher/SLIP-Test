@@ -16,7 +16,7 @@ private:
 
 public:
   void start_listener(std::string command);
-  void check_status(std::string command);
+  void status(std::string command);
   void connect_to_server(std::string command);
   void info();
   void shutdown();

@@ -54,12 +54,30 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
   }
 
   case SP_READ_BLOCK: {
-    // std::unique_ptr<ReadBlockRequest> request = std::make_unique<ReadBlockRequest>(packet[0], packet[2], packet[3]);
+    std::unique_ptr<ReadBlockRequest> request = std::make_unique<ReadBlockRequest>(packet[0], packet[2]);
+    request->set_block_number_from_ptr(packet.data(), 3);
+    response = smart_port_handler_->read_block(static_cast<ReadBlockRequest*>(request.get()));
     break;
   }
-  case SP_WRITE_BLOCK:
-  case SP_FORMAT:
-  case SP_INIT:
+
+  case SP_WRITE_BLOCK: {
+    std::unique_ptr<WriteBlockRequest> request = std::make_unique<WriteBlockRequest>(packet[0], packet[2]);
+    request->set_block_number_from_ptr(packet.data(), 3);
+    request->set_block_data_from_ptr(packet.data(), 6);
+    response = smart_port_handler_->write_block(static_cast<WriteBlockRequest*>(request.get()));
+    break;
+  }
+
+  case SP_FORMAT: {
+    std::unique_ptr<FormatRequest> request = std::make_unique<FormatRequest>(packet[0], packet[2]);
+    response = smart_port_handler_->format(static_cast<FormatRequest*>(request.get()));
+    break;
+  }
+
+  case SP_INIT: {
+    break;
+  }
+
   case SP_OPEN:
   case SP_CLOSE:
   case SP_READ:

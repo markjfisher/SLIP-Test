@@ -1,8 +1,22 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <cstring>
 
 #include "TestApp.h"
+
+
+inline constexpr auto hash_djb2a(const std::string_view sv) {
+    unsigned long hash{ 5381 };
+    for (unsigned char c : sv) {
+        hash = ((hash << 5) + hash) ^ c;
+    }
+    return hash;
+}
+
+inline constexpr auto operator"" _sh(const char *str, size_t len) {
+    return hash_djb2a(std::string_view{ str, len });
+}
 
 int main(int argc, char* argv[]) {
   TestApp app;
@@ -30,28 +44,48 @@ info                   # display listener info
 exit              # exit application
 )";
   std::string command;
+  std::string firstWord;
+  std::string arg1;
   std::cout << "> ";
-  while (std::getline(std::cin, command)) {
-    if (command == "exit") {
+  bool exiting = false;
+  while (!exiting && std::getline(std::cin, command)) {
+    std::istringstream iss(command);
+    iss >> firstWord;
+    iss >> arg1;
+    switch (hash_djb2a(firstWord)) {
+
+    case "exit"_sh:
       app.shutdown();
+      exiting = true;
       break;
-    }
 
-    // add 2 to string length for the next arg
-    if (command.find("start") == 0) {
+    case "start"_sh:
       app.start_listener(command);
-    }
+      break;
 
-    if (command.find("connect") == 0) {
-      app.connect_to_server(command);
-    }
-
-    if (command.find("status") == 0) {
-      app.check_status(command);
-    }
-
-    if (command.find("info") == 0) {
+    case "info"_sh:
       app.info();
+      break;
+
+    case "connect"_sh:
+      app.connect_to_server(command);
+      break;
+
+    // THESE ARE FOR GENERATING A REQUEST TO A TARGET CONNECTION
+    // This was done when initially testing the application without AppleWin involved.
+    // They could be implemented again, but are re-implementations of the FujiNet::process_sp_over_slip() code in AppleWin.
+    // Instead, look at the Responder class, which this client is acting as for most new functions,
+    // with the requestor running in AppleWin and invoked through 6502 applications.
+
+    case "status"_sh:
+      app.status(arg1);
+      break;
+
+    // TODO if needed:
+    // case "read_block"_sh:
+    //   app.read_block(arg1);
+    //   break;
+
     }
 
     std::cout << "> ";

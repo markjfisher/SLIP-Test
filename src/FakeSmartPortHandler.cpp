@@ -1,8 +1,31 @@
 #include <sstream>
 
 #include "FakeSmartPortHandler.h"
-#include "StatusResponse.h"
 #include "Util.h"
+
+#include "CloseRequest.h"
+#include "CloseResponse.h"
+#include "ControlRequest.h"
+#include "ControlResponse.h"
+#include "FormatRequest.h"
+#include "FormatResponse.h"
+#include "InitRequest.h"
+#include "InitResponse.h"
+#include "OpenRequest.h"
+#include "OpenResponse.h"
+#include "ReadBlockRequest.h"
+#include "ReadBlockResponse.h"
+#include "ReadRequest.h"
+#include "ReadResponse.h"
+#include "ResetRequest.h"
+#include "ResetResponse.h"
+#include "StatusRequest.h"
+#include "StatusResponse.h"
+#include "WriteBlockRequest.h"
+#include "WriteBlockResponse.h"
+#include "WriteRequest.h"
+#include "WriteResponse.h"
+
 
 void FakeSmartPortHandler::parse_capabilities(const std::string& input) {
   std::istringstream iss(input);
@@ -18,6 +41,8 @@ void FakeSmartPortHandler::parse_capabilities(const std::string& input) {
 
 std::unique_ptr<StatusResponse> FakeSmartPortHandler::status(StatusRequest* request) {
   std::cout << "FakeSmartPortHandler::status called with request: " << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
 
   if (request->get_sp_unit() != 0x00 && request->get_status_code() == 0x03) {
     // DIB request, get the capability for this unit number
@@ -78,8 +103,45 @@ std::unique_ptr<StatusResponse> FakeSmartPortHandler::status(StatusRequest* requ
 }
 
 std::unique_ptr<ControlResponse> FakeSmartPortHandler::control(ControlRequest* request) {
-  // just print out the request, and return a successful response (status = 0)
-  std::cout << "FakeSmartPortHandler::control called with request: " << std::endl;
+  std::cout << "FakeSmartPortHandler::control" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
   auto response = std::make_unique<ControlResponse>(request->get_request_sequence_number(), 0);
   return response;
 }
+
+std::unique_ptr<ReadBlockResponse> FakeSmartPortHandler::read_block(ReadBlockRequest* request) {
+  // Return a block of 512 bytes, data will contain a string of the block number, nul marker, then 0xAA filling rest
+  std::cout << "FakeSmartPortHandler::read_block" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<ReadBlockResponse>(request->get_request_sequence_number(), 0);
+  // Fill the data block with some values. Create a string out of the block number
+  uint32_t number = (static_cast<uint32_t>(request->get_block_number()[2]) << 16) |
+                  (static_cast<uint32_t>(request->get_block_number()[1]) << 8) |
+                  static_cast<uint32_t>(request->get_block_number()[0]);
+  std::string str = std::to_string(number);
+  std::vector<uint8_t> return_data(512, 0xAA);
+  std::copy(str.begin(), str.end(), return_data.begin());
+  return_data[str.size()] = '\0';
+  response->set_block_data(return_data.begin(), return_data.end());
+
+  return response;
+}
+
+std::unique_ptr<WriteBlockResponse> FakeSmartPortHandler::write_block(WriteBlockRequest* request) {
+  std::cout << "FakeSmartPortHandler::write_block" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<WriteBlockResponse>(request->get_request_sequence_number(), 0);
+  return response;
+}
+
+std::unique_ptr<FormatResponse> FakeSmartPortHandler::format(FormatRequest* request) {
+  std::cout << "FakeSmartPortHandler::format" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<FormatResponse>(request->get_request_sequence_number(), 0);
+  return response;
+}
+
