@@ -145,3 +145,55 @@ std::unique_ptr<FormatResponse> FakeSmartPortHandler::format(FormatRequest* requ
   return response;
 }
 
+std::unique_ptr<InitResponse> FakeSmartPortHandler::init(InitRequest* request) {
+  std::cout << "FakeSmartPortHandler::init" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<InitResponse>(request->get_request_sequence_number(), 0);
+  return response;
+}
+
+std::unique_ptr<OpenResponse> FakeSmartPortHandler::open(OpenRequest* request) {
+  std::cout << "FakeSmartPortHandler::open" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<OpenResponse>(request->get_request_sequence_number(), 0);
+  return response;
+}
+
+std::unique_ptr<CloseResponse> FakeSmartPortHandler::close(CloseRequest* request) {
+  std::cout << "FakeSmartPortHandler::close" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<CloseResponse>(request->get_request_sequence_number(), 0);
+  return response;
+}
+
+std::unique_ptr<ResetResponse> FakeSmartPortHandler::reset(ResetRequest* request) {
+  std::cout << "FakeSmartPortHandler::reset" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<ResetResponse>(request->get_request_sequence_number(), 0);
+  return response;
+}
+
+std::unique_ptr<ReadResponse> FakeSmartPortHandler::read(ReadRequest* request) {
+  // Return the 5 bytes of data from byte_count_ and address_ in request
+  std::cout << "FakeSmartPortHandler::read_block" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<ReadResponse>(request->get_request_sequence_number(), 0);
+  auto return_data = std::vector<uint8_t>();
+  return_data.insert(return_data.end(), request->get_byte_count().begin(), request->get_byte_count().end());
+  return_data.insert(return_data.end(), request->get_address().begin(), request->get_address().end());
+  response->set_data(return_data.begin(), return_data.end());
+  return response;
+}
+
+std::unique_ptr<WriteResponse> FakeSmartPortHandler::write(WriteRequest* request) {
+  std::cout << "FakeSmartPortHandler::write" << std::endl;
+  auto data = request->serialize();
+  Util::hex_dump(data);
+  auto response = std::make_unique<WriteResponse>(request->get_request_sequence_number(), 0);
+  return response;
+}

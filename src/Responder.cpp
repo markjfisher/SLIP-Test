@@ -75,16 +75,45 @@ void Responder::processRequestData(const std::vector<uint8_t>& packet) {
   }
 
   case SP_INIT: {
+    std::unique_ptr<InitRequest> request = std::make_unique<InitRequest>(packet[0], packet[2]);
+    response = smart_port_handler_->init(static_cast<InitRequest*>(request.get()));
     break;
   }
 
-  case SP_OPEN:
-  case SP_CLOSE:
-  case SP_READ:
-  case SP_WRITE:
-  case SP_RESET:
-    throw std::runtime_error("Not yet implemented");
+  case SP_OPEN: {
+    std::unique_ptr<OpenRequest> request = std::make_unique<OpenRequest>(packet[0], packet[2]);
+    response = smart_port_handler_->open(static_cast<OpenRequest*>(request.get()));
     break;
+  }
+
+  case SP_CLOSE: {
+    std::unique_ptr<CloseRequest> request = std::make_unique<CloseRequest>(packet[0], packet[2]);
+    response = smart_port_handler_->close(static_cast<CloseRequest*>(request.get()));
+    break;
+  }
+
+  case SP_READ: {
+    std::unique_ptr<ReadRequest> request = std::make_unique<ReadRequest>(packet[0], packet[2]);
+    request->set_byte_count_from_ptr(packet.data(), 3);
+    request->set_address_from_ptr(packet.data(), 5);
+    response = smart_port_handler_->read(static_cast<ReadRequest*>(request.get()));
+    break;
+  }
+
+  case SP_WRITE: {
+    std::unique_ptr<WriteRequest> request = std::make_unique<WriteRequest>(packet[0], packet[2]);
+    request->set_byte_count_from_ptr(packet.data(), 3);
+    request->set_address_from_ptr(packet.data(), 5);
+    request->set_data_from_ptr(packet.data(), 8, packet.size() - 8);
+    response = smart_port_handler_->write(static_cast<WriteRequest*>(request.get()));
+    break;
+  }
+
+  case SP_RESET: {
+    std::unique_ptr<ResetRequest> request = std::make_unique<ResetRequest>(packet[0], packet[2]);
+    response = smart_port_handler_->reset(static_cast<ResetRequest*>(request.get()));
+    break;
+  }
 
   default: {
     std::ostringstream oss;

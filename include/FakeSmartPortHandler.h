@@ -43,12 +43,12 @@ public:
   virtual std::unique_ptr<WriteBlockResponse> write_block(WriteBlockRequest* request) override;
   virtual std::unique_ptr<FormatResponse> format(FormatRequest* request) override;
   virtual std::unique_ptr<ControlResponse> control(ControlRequest* request) override;
-  // virtual std::unique_ptr<XResponse> init(InitRequest* request) override;
-  // virtual std::unique_ptr<XResponse> open(OpenRequest* request) override;
-  // virtual std::unique_ptr<XResponse> close(CloseRequest* request) override;
-  // virtual std::unique_ptr<XResponse> read(ReadRequest* request) override;
-  // virtual std::unique_ptr<XResponse> write(WriteRequest* request) override;
-  // virtual std::unique_ptr<XResponse> reset(ResetRequest* request) override;
+  virtual std::unique_ptr<InitResponse> init(InitRequest* request) override;
+  virtual std::unique_ptr<OpenResponse> open(OpenRequest* request) override;
+  virtual std::unique_ptr<CloseResponse> close(CloseRequest* request) override;
+  virtual std::unique_ptr<ReadResponse> read(ReadRequest* request) override;
+  virtual std::unique_ptr<WriteResponse> write(WriteRequest* request) override;
+  virtual std::unique_ptr<ResetResponse> reset(ResetRequest* request) override;
 
   void parse_capabilities(const std::string& input);
 

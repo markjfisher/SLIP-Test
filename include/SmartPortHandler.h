@@ -35,10 +35,10 @@ public:
   virtual std::unique_ptr<WriteBlockResponse> write_block(WriteBlockRequest* request) = 0;
   virtual std::unique_ptr<FormatResponse> format(FormatRequest* request) = 0;
   virtual std::unique_ptr<ControlResponse> control(ControlRequest* request) = 0;
-  // virtual std::unique_ptr<Response> init(InitRequest* request) = 0;
-  // virtual std::unique_ptr<Response> open(OpenRequest* request) = 0;
-  // virtual std::unique_ptr<Response> close(CloseRequest* request) = 0;
-  // virtual std::unique_ptr<Response> read(ReadRequest* request) = 0;
-  // virtual std::unique_ptr<Response> write(WriteRequest* request) = 0;
-  // virtual std::unique_ptr<Response> reset(ResetRequest* request) = 0;
+  virtual std::unique_ptr<InitResponse> init(InitRequest* request) = 0;
+  virtual std::unique_ptr<OpenResponse> open(OpenRequest* request) = 0;
+  virtual std::unique_ptr<CloseResponse> close(CloseRequest* request) = 0;
+  virtual std::unique_ptr<ReadResponse> read(ReadRequest* request) = 0;
+  virtual std::unique_ptr<WriteResponse> write(WriteRequest* request) = 0;
+  virtual std::unique_ptr<ResetResponse> reset(ResetRequest* request) = 0;
 };
