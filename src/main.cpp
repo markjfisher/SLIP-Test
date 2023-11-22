@@ -49,10 +49,18 @@ exit              # exit application
   std::cout << "> ";
   bool exiting = false;
   while (!exiting && std::getline(std::cin, command)) {
+    if (command == "") {
+      std::cout << "> ";
+      continue;
+    }
+
     std::istringstream iss(command);
     iss >> firstWord;
     iss >> arg1;
     switch (hash_djb2a(firstWord)) {
+    case ""_sh:
+      std::cout << "Nothing entered. Nothing doin'" << std::endl;
+      break;
 
     case "exit"_sh:
       app.shutdown();

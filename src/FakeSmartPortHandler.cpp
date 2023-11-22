@@ -40,7 +40,7 @@ void FakeSmartPortHandler::parse_capabilities(const std::string& input) {
 }
 
 std::unique_ptr<StatusResponse> FakeSmartPortHandler::status(StatusRequest* request) {
-  std::cout << "FakeSmartPortHandler::status called with request: " << std::endl;
+  std::cout << "FakeSmartPortHandler::status" << std::endl;
   auto data = request->serialize();
   Util::hex_dump(data);
 
@@ -179,7 +179,7 @@ std::unique_ptr<ResetResponse> FakeSmartPortHandler::reset(ResetRequest* request
 
 std::unique_ptr<ReadResponse> FakeSmartPortHandler::read(ReadRequest* request) {
   // Return the 5 bytes of data from byte_count_ and address_ in request
-  std::cout << "FakeSmartPortHandler::read_block" << std::endl;
+  std::cout << "FakeSmartPortHandler::read" << std::endl;
   auto data = request->serialize();
   Util::hex_dump(data);
   auto response = std::make_unique<ReadResponse>(request->get_request_sequence_number(), 0);

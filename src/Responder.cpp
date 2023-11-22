@@ -3,6 +3,7 @@
 #include <sstream>
 #include <memory>
 #include "Responder.h"
+#include "Util.h"
 
 #include "CloseRequest.h"
 #include "CloseResponse.h"

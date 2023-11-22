@@ -18,11 +18,6 @@
 #include "Util.h"
 
 void TCPConnection::send_data(const std::vector<uint8_t>& data) {
-// #ifdef DEBUG
-  std::cout << "TCPConnection::send_data, sending data:" << std::endl;
-  Util::hex_dump(data);
-// #endif
-
   if (data.empty()) {
     std::cerr << "TCPConnection::send_data No data was given to send" << std::endl;
     return;
@@ -30,7 +25,7 @@ void TCPConnection::send_data(const std::vector<uint8_t>& data) {
 
   auto slip_data = SLIP::encode(data);
 // #ifdef DEBUG
-  std::cout << "TCPConnection::send_data sending:" << std::endl;
+  std::cout << "TCPConnection::send_data returning SLIP data:" << std::endl;
   Util::hex_dump(slip_data);
 // #endif
 
